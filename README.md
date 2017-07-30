@@ -1,6 +1,9 @@
 # gFodder
-##My submission to the GMGC
-Master the fodder.
+
+![TitleImage](https://user-images.githubusercontent.com/2367602/28755154-c5fd8868-7597-11e7-855f-20bee32f275e.png)
+
+A new gamemode that attempts to turn regular players into a culinary masters.
+On gFodder one will face various challenges as you compete head-to-head to create delicious dishes.
 
 ##How to play:
 Press play, vote for a gamemode, join a team, ready up and wait for the game to start.
