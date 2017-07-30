@@ -1,0 +1,7 @@
+"gfodder"
+{
+	"base"		"base"
+	"title"		"gfodder"
+	"maps"		"^gfod_"
+	"menusystem"	"1"
+}

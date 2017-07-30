@@ -1,0 +1,5 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "gfodder/entities/lootbox/lootbox_2"
+	"$model" 1
+}
