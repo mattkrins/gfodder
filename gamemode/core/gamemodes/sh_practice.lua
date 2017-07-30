@@ -6,12 +6,6 @@ GM.Material = "overcooked/ui/gamemodes/mode_practice.png"
 GM.Spectators = true
 GM.Teams = {1,2}
 
-if CLIENT then
-	local StopwatchMaterial = Material( "overcooked/ui/stopwatch.png", "noclamp smooth" )
-	GM.HUDPaint = function(s)
-		
-	end
-end
 if SERVER then
 	GM.DelayPlay = 2
 	GM.Init = function(s)

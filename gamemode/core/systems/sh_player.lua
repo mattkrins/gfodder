@@ -1,9 +1,3 @@
---[[
-	ply.profile.name
-	ply.profile.money
-	ply.profile.models
-	ply.profile.hats
-]]
 PlayerSystem = {}
 PlayerSystem.Options = {
 	["MENU MUSIC"] = "Toggle",
