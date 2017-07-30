@@ -8,7 +8,7 @@ if CLIENT then
 	hook.Add( "HUDPaint", "GamemodeSystem.HUDPaint", function()
 		if DEVELOPER_MODE then draw.SimpleTextOutlined( "Active GM: "..GamemodeSystem:GetActive(), "CloseCaption_Bold", ScrW()-20, 20, Color( 255, 255, 255, 200 ), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP, 2, Color( 0, 0, 0, 50 ) ) end
 		if GetGlobalBool( "GMShowCoins", false ) then
-			local score = GetGlobalInt( "TeamScore", 0 )
+			local score = LocalPlayer():GetNWFloat( 'score', 0 )
 			draw.SimpleTextOutlined( "SCORE", Font( 40, 900, false ), 10, ScrH()-60, Color( 255, 255, 255, 100 ), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, Color( 0, 0, 0, 50 ) )
 			draw.SimpleTextOutlined( score, Font( 60, 900, false ), 10, ScrH()-5, LerpColor(pulse,Color( 255, 237, 104, 100 ),Color( 0, 237, 104, 220 )), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, LerpColor(pulse,Color( 0, 0, 0, 50 ),Color( 0, 50, 0, 200 )) )
 			if pulse > 0 then pulse = math.Clamp(pulse - 0.001,0,1) end
@@ -24,6 +24,34 @@ if CLIENT then
 			local timeLeft = math.Clamp(time/(timeLimit or 1),0,1)
 			draw.SimpleTextOutlined( "TIME", Font( 40, 900, false ), ScrW()-10, ScrH()-60, Color( 255, 255, 255, 100 ), TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM, 1, Color( 0, 0, 0, 50 ) )
 			draw.SimpleTextOutlined( niceTime, Font( 60, 900, false ), ScrW()-10, ScrH()-5, LerpColor(timeLeft,Color( 234, 70, 68, 200 ),Color( 255, 255, 255, 100 )), TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM, 1, Color( 0, 0, 0, 50 ) )
+		end
+		local wide = 200
+		local high = 100
+		for k,v in pairs(LocalPlayer().Orders or {}) do
+			local x = (k*(wide+10))-wide
+			if v.Recipe then
+				if v.Closing then v.Up = (v.Up or 0) - 0.5 end
+				draw.RoundedBox( 18, x+15, 70+(v.Up or 0), wide-20, high, Color(0,0,0,200) )
+				surface.SetDrawColor(color_white)
+				for r,m in pairs(v.Recipe) do
+					local lH = 50+(v.Up or 0)
+					local lX = (wide/2)+(#v.Recipe*(lH/2))-(r*lH)
+					surface.SetMaterial( m )
+					surface.DrawTexturedRect(x+lX+5, high+5, lH, lH)
+				end
+			end
+			local lerp = (v.Decay-CurTime())/v.Time
+			local bgCol = Color(255,255,255,255)
+			if v.Closing then bgCol = Color(255,150,150,255) end
+			if v.Accepted then bgCol = Color(155,255,150,255) end
+			draw.RoundedBox( 18, x+5, 0, wide, high, bgCol )
+			draw.RoundedBox( 0, x+5, 0, wide, 20, Color( 82, 82, 82, 255 ) )
+			draw.RoundedBox( 0, x+5, 0, lerp*wide-2, 20, LerpColor(lerp,Color(255, 79, 79,255),Color( 147, 255, 117, 255 )) )
+			if v.Material then
+				surface.SetDrawColor(color_white)
+				surface.SetMaterial( v.Material )
+				surface.DrawTexturedRect(x+5+wide/2-((high-5)/2), 0, high-5, high-5)
+			end
 		end
 		local Mode = GamemodeSystem:GetMode() or false
 		if Mode then if Mode.HUDPaint then Mode:HUDPaint() end end
@@ -51,7 +79,7 @@ GamemodeSystem.GetPlaying = function( self ) return GetGlobalBool( "GMPlaying", 
 GamemodeSystem.Clock.Remaining = function( self ) return math.floor( GetGlobalInt( "Clock", CurTime() ) - CurTime() ) end
 if CLIENT then return end
 util.AddNetworkString( "GamemodeSystem.Net" )
-GamemodeSystem.Orders = {"Sandwich"}
+GamemodeSystem.Orders = {}
 GamemodeSystem.SetActive = function( self, mN )
 	SetGlobalString( "ActiveGM", mN )
 	for _,v in pairs(player.GetAll()) do v:ConCommand( "menu Load" ) end
@@ -69,6 +97,13 @@ GamemodeSystem.SetActive = function( self, mN )
 end
 GamemodeSystem.Score = function( self, TeamID )
 	local score = GetGlobalInt( "TeamScore", 0 )
+end
+GamemodeSystem.GiveScore = function( self, ply )
+	ply:SetNWFloat( 'score', ply:GetNWFloat( 'score', 0 ) + 100 )
+	ply:ConCommand( "PulseScore" )
+end
+GamemodeSystem.GenerateOrders = function( self )
+	self.Orders = {"Sliced Lettuce","Cooked Meat Patty","Bread Slice","Sandwich"}
 end
 GamemodeSystem.Init = function( self )
 	local Mode = self:GetMode() or false
@@ -119,6 +154,7 @@ GamemodeSystem.Load = function( self )
 	end
 	if Mode.Load then Mode:Load() end
 	self.Loaded = true
+	self:GenerateOrders()
 	timer.Simple( 2, function() self:Init() end )
 end
 local checkMusic = false
@@ -155,6 +191,10 @@ GamemodeSystem.Reset = function( self )
 		v:StripWeapons()
 		v:Spectate( OBS_MODE_ROAMING )
 		v:SetObserverMode( OBS_MODE_ROAMING )
+		//v:SetPData( "money", v:GetNWFloat( 'score', 0 ) )
+		//v:SetNWFloat( 'score', 0 )
+		
+		
 	end
 	if MapSystem and MapSystem.Reset then MapSystem:Reset() end
 end

@@ -1,21 +1,18 @@
 Map.Camera = {Vector(-3.615351,660.122681,111.284393),Angle(20.138,-89.956,0)}
 
 Map.Init = function()
-	MapSystem:Spawn("base_judge", Vector(-2.0625,-30,15), Angle(0,90,0), false)
+	MapSystem:Spawn("base_judge", Vector(2.148692,-55.848934,15), Angle(0,90,0), false)
 	MapSystem:Spawn("item_plate", {
-		Vector(203.125,144.53125,42),
-		Vector(206.53125,238.125,42),
-		Vector(207.84375,336.625,42),
-		Vector(203.59375,431.625,42),
-		Vector(204.125,529.0625,42),
-		Vector(204.875,622.59375,42),
-		Vector(-203.28125,623.46875,42),
-		Vector(-204.03125,528.40625,42),
-		Vector(-207.71875,430.03125,42),
-		Vector(-203.40625,333.78125,42),
-		Vector(-203.1875,240.5,42),
-		Vector(-202.59375,142.84375,42)
+		Vector(62.916809,7.860398,41.311932),
+		Vector(62.916809,7.860398,43.311932),
+		Vector(62.916809,7.860398,45.311932)
 	}, false, true)
+	MapSystem:Spawn("item_plate", {
+		Vector(-63.993061,8.019382,41.311935),
+		Vector(-63.993061,8.019382,43.311935),
+		Vector(-63.993061,8.019382,45.311935),
+	}, false, true)
+	
 end
 Map.PlayerSpawns = {}
 Map.PlayerSpawns[1] = {

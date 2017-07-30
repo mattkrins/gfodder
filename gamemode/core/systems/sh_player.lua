@@ -17,8 +17,9 @@ end
 if SERVER then
 	util.AddNetworkString( "Player.Net" )
 	PlayerSystem.Sync = function( self, ply )
-		ply:SetPData( "settings", util.TableToJSON( ply.settings or self.Defaults ) )
-		net.Start( "Player.Net" ) net.WriteTable(ply.settings or self.Defaults) net.Send(ply)
+		ply.settings = ply.settings or {}
+		ply:SetPData( "settings", util.TableToJSON( ply.settings ) )
+		net.Start( "Player.Net" ) net.WriteTable(ply.settings) net.Send(ply)
 	end
 	net.Receive( "Player.Net", function(len, ply)
 		if ( !IsValid( ply ) or !ply:IsPlayer() ) then return end
@@ -30,13 +31,13 @@ if SERVER then
 		PlayerSystem:Sync(ply)
 	end )
 	hook.Add( "PlayerInitialSpawn", "PlayerInitialSpawnPlayer", function ( ply )		
-		ply.settings = ply:GetPData( "settings", false ) or false
-		if !ply.settings or (table.Count(util.JSONToTable( ply.settings )) <= 0) then
+		local oldSettingPData = ply:GetPData( "settings", false ) or false
+		ply.settings = {}
+		if !oldSettingPData then
 			ply.settings = table.Copy(PlayerSystem.Defaults)
 		else
-			oldSettings = util.JSONToTable( ply.settings )
-			ply.settings = {}
-			for k, v in pairs(PlayerSystem.Options) do
+			oldSettings = util.JSONToTable( oldSettingPData or "" ) or {}
+			for k, v in pairs(PlayerSystem.Defaults) do
 				ply.settings[k] = oldSettings[k] or PlayerSystem.Defaults[k]
 			end
 		end

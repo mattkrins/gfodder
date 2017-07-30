@@ -38,7 +38,7 @@ if SERVER then
 					Tables.GMFinished = {}
 					Tables.GMTeams = {}
 					Sync()
-				end)
+				end, true)
 			else
 				ConditionalCountDown(5, shouldStart, function()
 					GamemodeSystem:Load()
@@ -104,9 +104,14 @@ if SERVER then
 		if table.HasValue(Tables.GMFinished, ply) then table.RemoveByValue(Tables.GMFinished, ply) else table.insert(Tables.GMFinished, ply) end
 		Sync()
 	end)
+	concommand.Add("OpenBox", function(ply, cmd, args)
+		local dosh = ply:GetNWFloat( 'score', 0 ) or 0
+		if dosh < 100 then return end
+		ply:SetNWFloat( 'score', dosh-100 )
+	end)
 	
 	hook.Add( "PlayerInitialSpawn", "PlayerInitialSpawnMenu", function ( ply )
-		Sync() timer.Simple(0.2, function() if IsValid(ply) then ply:ConCommand( "menu" ) end end)
+		Sync() timer.Simple(0.2, function() if IsValid(ply) then ply:ConCommand( "menu Intro" ) end end)
 	end )
 	
 end
@@ -216,7 +221,7 @@ surface.CreateFont( "AvatarFrame", {font = "Trebuchet24",size = 22, weight = 500
 menu.AvatarFrame = function( x, y, w, h, parent, extend, ply, size )
 	local player = ply or LocalPlayer()
 	surface.SetFont( "Trebuchet18" )
-	local Level = 0
+	local Level = (LocalPlayer():GetNWFloat( 'score', 0 ) or 0)
 	local levelW = surface.GetTextSize( Level )
 	local AvatarPanel = menu.vgui("DPanel", x or 0, y or 0, w or 0, h or 0, parent)
 	if extend then
@@ -265,9 +270,7 @@ local function addHat(model, hat)
 			CSM:AddEffects( EF_BONEMERGE_FASTCULL )
 			//CSM:SetNoDraw( true )
 			model.HatModel = CSM
-			
 			model:CallOnRemove( tostring(CSM), function( ent ) if IsValid(model.HatModel) then model.HatModel:Remove() end end )
-			
 		end
 	end
 end
@@ -386,6 +389,7 @@ menu.Frames.Loot = function( self )
 	Open.DoClick = function ( s )
 		surface.PlaySound(GAMEMODE.Name.."/gui/open_loot.mp3")
 		ModelPanel:Animate( "Open" )
+		RunConsoleCommand( "OpenBox" )
 		timer.Simple(1,function()
 			ModelPanel:Animate( "Close" )
 			ModelPanel:Explode("sprites/scanner_dots2", 50, 60, 3.5)
@@ -396,7 +400,8 @@ menu.Frames.Loot = function( self )
 		end)
 		s:SetDisabled(true)
 	end
-	//Open:SetDisabled(true)
+	if LocalPlayer():GetNWFloat( 'score', 0 ) < 100 then Open:SetDisabled(true) end
+	
 	local Buy = menu.BoxButton( (w/2)+80, h-100, 100, 60, Frame, "BUY", "BoxButtonAccent", function() end )
 	Buy:SetDisabled(true)
 
@@ -448,7 +453,7 @@ menu.Frames.Gallery = function( self )
 	List:SetSpaceY( 5 )
 	List:SetSpaceX( 5 )
 
-	for i = 1, 10 do
+	for i = 1, 1 do
 		local ListItem = List:Add( "DPanel" )
 		ListItem:SetSize( 100, 180 )
 		ListItem.Paint = function ( s, w, h )
@@ -530,8 +535,8 @@ menu.Frames.Options = function( self )
 		layout:Add( DOption )
 	end
 	
-	local restore = menu.KeyButton("ENTER", "RESTORE DEFAULTS", Frame:GetWide()-350, Frame:GetTall()-50, 180, 30, Frame, function() menu:Select("Options") end)
-	menu.BindKey(restore, KEY_ENTER)
+	//local restore = menu.KeyButton("ENTER", "RESTORE DEFAULTS", Frame:GetWide()-350, Frame:GetTall()-50, 180, 30, Frame, function() menu:Select("Options") end)
+	//menu.BindKey(restore, KEY_ENTER)
 	
 	menu.BackButton(Frame:GetWide()-150, Frame:GetTall()-50, Frame)
 	
@@ -759,6 +764,7 @@ menu.Frames.Play = function( self )
 				if flip then align = TEXT_ALIGN_LEFT end flip = !flip
 			end
 			Team_List.AddPlayer = function ( s, ply )
+				if !IsValid(ply) then return end
 				local line = menu.vgui( "DPanel", 0, 0, s:GetWide(), height, s )
 				line:SetAlpha( 0 ) line:AlphaTo( 255, 0.5)
 				line.player = ply
@@ -851,13 +857,14 @@ menu.Themes.MainMenu = {
 	Font = "MainMenu",
 	Color = color_white,
 	Hover = Color(255, 240, 40, 255),
-	Sound = {Click = "overcooked/ui/click.mp3",Roll = "overcooked/ui/rollover.mp3"},
+	Sound = {Click = GM.Name.."/gui/click.mp3",Roll = GM.Name.."/gui/rollover.mp3"},
 	Size = 70
 }
 menu.Themes.SubMainMenu = {
 	Font = "SubMainMenu",
 	Color = Color(177, 196, 228, 255),
 	Hover = Color(255, 240, 40, 255),
+	Sound = {Click = GM.Name.."/gui/click.mp3",Roll = GM.Name.."/gui/rollover.mp3"},
 	Size = 40
 }
 
@@ -880,9 +887,6 @@ menu.Frames.Main = function( self )
 	menu.AddButton("Play", mainMenu, padX, fontH, function(s)
 		menu:Select("Play")
 	end, theme)
-	menu.AddButton("Training", mainMenu, padX, fontH, function(s)
-		LocalPlayer():ConCommand( "GMReset" )
-	end, theme)
 	menu.AddButton("Chef Gallery", mainMenu, padX, fontH, function(s) menu:Select("Gallery") end, theme)
 	menu.AddButton("Loot Box", mainMenu, padX, fontH, function(s) menu:Select("Loot") end, theme)
 	if DEVELOPER_MODE then menu.AddButton("Close", mainMenu, padX, fontH, function(s) menu:Close() end, theme) end
@@ -891,7 +895,12 @@ menu.Frames.Main = function( self )
 	local fontHPad = padY+(#mainMenu.Buttons*fontH)
 	local fontH = menu:GetTheme(theme).Size
 	local subMenu = menu.vgui("DListLayout", padX, fontHPad+10, w/4, h-fontHPad-20, Frame)
-	menu.AddButton("Profile", subMenu, padX, fontH, function(s) end, theme)
+	if DEVELOPER_MODE then
+		menu.AddButton("Force GM Reset", subMenu, padX, fontH, function(s)
+			RunConsoleCommand( "GMReset" )
+		end, theme)
+	end
+	//menu.AddButton("Profile", subMenu, padX, fontH, function(s) end, theme)
 	menu.AddButton("Options", subMenu, padX, fontH, function(s) menu:Select("Options") end, theme)
 	menu.AddButton("Disconnect", subMenu, padX, fontH, function(s) LocalPlayer():ConCommand( "disconnect" ) end, theme)
 	
@@ -968,6 +977,24 @@ menu.Frames.InGame = function( self )
 	
 	menu.BackButton(Frame:GetWide()-150, Frame:GetTall()-50, Frame)
 
+	return Frame
+end
+menu.Frames.Intro = function( self )
+	local Frame, w, h = menu.vgui(FrameType, 0, 0, menu:Width(), menu:Height(), menu.Frame, true)
+	local Underlay = menu.vgui( "DPanel", 0, h, w, h, Frame, true )
+	Underlay.Paint = function ( s, w, h )
+		menu.DrawMaterial(w/2-300, h/2-60, 600, 120, TitleMaterial, Color(255,255,255,255))
+	end
+	if PlayerSystem:GetSetting("MENU MUSIC") then MusicSystem:Play( "sound/"..GAMEMODE.Name.."/music/intro_long.mp3" ) end
+	Frame.OnSelect = function ( s )
+		Underlay:MoveTo(0,0,3,0,-1,function()
+			surface.PlaySound(GAMEMODE.Name.."/gui/knife_slash.mp3")
+			Frame:AlphaTo( 1, 2, 1, function()
+				if GamemodeSystem:GetPlaying() then menu:Select("InGame", true) else menu:Select("Main", true) end
+			end)
+		end)
+	end
+	
 	return Frame
 end
 menu.Selected = false
@@ -1050,7 +1077,6 @@ menu.Init = function( self, initialFrame )
 			self:Select("InGame", true)
 		else
 			self:Select("Main", true)
-			if PlayerSystem:GetSetting("MENU MUSIC") then MusicSystem:Play( "sound/"..GAMEMODE.Name.."/music/intro_long.mp3" ) end
 		end
 		
 	end
@@ -1075,6 +1101,9 @@ menu.vgui = function( class, x, y, w, h, parent, noPaint )
 	if noPaint then Element.Paint = function () end end
 	return Element, (w or 0), (h or 0)
 end
-concommand.Add("menu", function(ply,cmd,args) local allowed = {"Load","Play"} if args and args[1] and table.HasValue(allowed, args[1]) then menu:Init(args[1]) else menu:Init() end end )
+concommand.Add("menu", function(ply,cmd,args) local allowed = {"Load","Play","Intro"} if args and args[1] and table.HasValue(allowed, args[1]) then menu:Init(args[1]) else menu:Init() end end )
 concommand.Add("closeMenu", function() menu:Close() end)
 function GM:ScoreboardShow() if GamemodeSystem:GetPlaying() and !IsValid(menu.Frame) then menu:Init("InGame") end end
+hook.Add( "OnSpawnMenuOpen", "OnSpawnMenuOpenFrame", function()
+	if GamemodeSystem:GetPlaying() and !IsValid(menu.Frame) then menu:Init("InGame") end
+end )

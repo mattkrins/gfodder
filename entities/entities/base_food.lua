@@ -6,7 +6,7 @@ ENT.PrintName = "base_food"
 ENT.Author = "StealthPaw"
 ENT.Spawnable = false
 ENT.AdminSpawnable = true
-ENT.Category	= "overcooked"
+ENT.Category	= GAMEMODE.Name
 ENT.OCItem	= true
 ENT.Combustable = true
 

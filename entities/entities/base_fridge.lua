@@ -9,7 +9,7 @@ ENT.Model	= "models/props_interiors/refrigerator01a.mdl"
 ENT.Material	= ""
 ENT.Spawnable = true
 ENT.AdminSpawnable = true
-ENT.Category	= "overcooked"
+ENT.Category	= GAMEMODE.Name
 ENT.Editable = false
 ENT.RenderFoods = false
 ENT.DropModelDistance = 0
@@ -39,12 +39,12 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 end
 
 if SERVER then
-	util.AddNetworkString( "base_fridge" )
-	net.Receive( "base_fridge", function()
-		local fridge = net.ReadEntity()
-		local food = net.ReadString() or false if !food or food == "" then food = false end
-		if IsValid(fridge) then fridge:Open(food or false) end
-	end )
+	concommand.Add("Fridge_Interact", function(ply, cmd, args)
+		local tr = ply:GetEyeTrace( )
+		local ent = tr.Entity
+		if !IsValid(ent) or ent:GetClass() != "base_fridge" then return end
+		if args and args[1] then ent:Open(args[1]) else ent:Close() end
+	end)
 	function ENT:Open(foodName)
 		if !foodName then return self:Close() end
 		if self:GetOpen() then self:Close() timer.Simple( 0.5, function() if IsValid(self) then self:Open(foodName) end end ) return end
@@ -63,12 +63,11 @@ if SERVER then
 	function ENT:Use(act, ply)
 		if (self.NextUse or 0) >= CurTime() then return end self.NextUse = CurTime() + 1
 		self:Close()
-		net.Start( "base_fridge" ) net.WriteEntity( self ) net.Send(ply)
+		ply:ConCommand( "Fridge_Inspect" )
 		self.LastUser = ply
 	end
 	function ENT:OnUse()
 		self.DropModelDistance = table.Random(self.ShelveDistances)
-		//self.DropModelDistance = 11
 		local Dropped = self:SpawnFood(self:GetfoodType())
 		if !IsValid(Dropped) then return end
 		self.LastDropped = Dropped
@@ -80,7 +79,7 @@ if SERVER then
 		end
 		if self.LastUser then
 			if !IsValid(self.LastUser) then self.LastUser = false self:Close() return end
-			if self:GetPos():Distance(self.LastUser:GetPos()) > 100 then self.LastUser:ConCommand( "base_fridge_close" ) self.LastUser = false self:Close() end
+			if self:GetPos():Distance(self.LastUser:GetPos()) > 100 then self.LastUser:ConCommand( "Fridge_Close" ) self.LastUser = false self:Close() end
 		end
 	end
 end
@@ -125,29 +124,21 @@ if CLIENT then
 		end
 	end
 	local FridgeMenu
-	function ENT:Close(food)
+	local function Open()
 		if IsValid(FridgeMenu) then FridgeMenu:Remove() end
-		net.Start( "base_fridge" )
-			net.WriteEntity( self )
-			if food then net.WriteString( food ) end
-		net.SendToServer()
-	end
-	function ENT:Open()
-		if IsValid(self) then self:Close() else if IsValid(FridgeMenu) then FridgeMenu:Remove() end end
-		local Frame = vgui.Create( "DPanel" )
-		FridgeMenu = Frame
-		Frame:SetSize( ScrW(), ScrH() )
-		Frame:MakePopup()
-		Frame:SetKeyboardInputEnabled( false )
-		Frame.Paint = function ( s, w, h )	if !FridgeMenu or !IsValid(FridgeMenu) then s:Remove() end end
+		FridgeMenu = vgui.Create( "DPanel" )
+		FridgeMenu:SetSize( ScrW(), ScrH() )
+		FridgeMenu:MakePopup()
+		FridgeMenu:SetKeyboardInputEnabled( false )
+		FridgeMenu.Paint = function ( s, w, h )	if !FridgeMenu then s:Remove() end end
 		
-		local Overlay = vgui.Create( "DButton", Frame )
-		Overlay:SetSize( Frame:GetWide(), Frame:GetTall() )
+		local Overlay = vgui.Create( "DButton", FridgeMenu )
+		Overlay:SetSize( FridgeMenu:GetWide(), FridgeMenu:GetTall() )
 		Overlay:SetPos( 0, 0 )
 		Overlay:SetText( "" )
 		Overlay:SetCursor( "arrow" )
 		Overlay.Paint = function ( s, w, h ) end
-		Overlay.DoClick = function ( s, w, h ) if IsValid(self) then self:Close() else if IsValid(FridgeMenu) then FridgeMenu:Remove() end end end
+		Overlay.DoClick = function ( s, w, h ) if IsValid(FridgeMenu) then FridgeMenu:Remove() end end
 				
 		local FoodsList	= vgui.Create( "DIconLayout", Overlay )
 		FoodsList:SetSize( Overlay:GetWide(), Overlay:GetTall()/4 )
@@ -171,13 +162,20 @@ if CLIENT then
 				surface.DrawTexturedRect(5, 5, w-10, h-10)
 			end
 			foodButton.DoClick = function ( s, w, h )
-				if IsValid(self) then self:Close(v) else if IsValid(FridgeMenu) then FridgeMenu:Remove() end end
+				RunConsoleCommand( "Fridge_Interact", v )
+				if IsValid(FridgeMenu) then FridgeMenu:Remove() end
 			end
 		end
 		FoodsList:SetSize( (#FoodsList:GetChildren() or 0)*(size+5), Overlay:GetTall()/4 )
 		FoodsList:Center()
-		if (#FoodsList:GetChildren() or 0) <= 0 then surface.PlaySound( "buttons/button8.wav" ) self:Close() end
+		if (#FoodsList:GetChildren() or 0) <= 0 then surface.PlaySound( "buttons/button8.wav" ) FridgeMenu:Remove() end
 	end
-	net.Receive( "base_fridge", function() local fridge = net.ReadEntity() if IsValid(fridge) then fridge:Open() end end )
-	concommand.Add("base_fridge_close", function() if IsValid(FridgeMenu) then FridgeMenu:Remove() end end)
+	concommand.Add("Fridge_Close", function() if IsValid(FridgeMenu) then FridgeMenu:Remove() end end)
+	concommand.Add("Fridge_Inspect", function()
+		local tr = LocalPlayer():GetEyeTrace( )
+		if !IsValid(tr.Entity) or tr.Entity:GetClass() != "base_fridge" then return end
+		local dist = tr.Entity:GetPos():Distance(LocalPlayer():GetPos())
+		if dist > 100 then return end
+		Open()
+	end)
 end

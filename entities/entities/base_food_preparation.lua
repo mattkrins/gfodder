@@ -6,10 +6,10 @@ ENT.PrintName = "base_food_preparation"
 ENT.Author = "StealthPaw"
 ENT.Spawnable = true
 ENT.AdminSpawnable = true
-ENT.Category = "overcooked"
+ENT.Category = GAMEMODE.Name
 ENT.Model = "models/props_vents/vent_large_grill001.mdl"
 ENT.Material = "models/effects/vol_light001"
-ENT.Sound = "overcooked/chop.mp3"
+ENT.Sound = GAMEMODE.Name.."/entities/chop.mp3"
 ENT.ModulateSound = true
 ENT.DropModelDistance = 3
 ENT.Cooker	= false
@@ -31,7 +31,7 @@ if SERVER then
 		if table.HasValue(foodEntity.PreparedBy or {}, self.PreparationType) then return end
 		foodEntity:Remove()
 		self:AddFood(Name, foodEntity)
-		self:EmitSound( "overcooked/pop_low.mp3" )
+		self:MakeSound(GAMEMODE.Name.."/player/pop_normal.mp3",true)
 	end
 	function ENT:Finish(food)
 		local fT = FoodSystem:Food(food.Name) or {}
@@ -45,7 +45,7 @@ if SERVER then
 	function ENT:DropFinished(Name)
 		if (self.NextDrop or 0) > CurTime() then return true end self.NextDrop=CurTime()+1
 		self:SpawnFood(Name)
-		self:MakeSound("overcooked/pop_normal.mp3",true)
+		self:MakeSound(GAMEMODE.Name.."/player/pop_normal.mp3",true)
 		return true
 	end
 	function ENT:Prepare()

@@ -4,9 +4,9 @@ DEFINE_BASECLASS( "item_spawner" )
 ENT.Type = "anim"
 ENT.PrintName = "Food Spawner 2"
 ENT.Author = "StealthPaw"
-ENT.Spawnable = true
+ENT.Spawnable = false
 ENT.AdminSpawnable = true
-ENT.Category	= "overcooked"
+ENT.Category	= GAMEMODE.Name
 ENT.Editable = true
 ENT.RenderFoods = false
 

@@ -6,7 +6,7 @@ ENT.PrintName = "Food Spawner"
 ENT.Author = "StealthPaw"
 ENT.Spawnable = true
 ENT.AdminSpawnable = true
-ENT.Category	= "overcooked"
+ENT.Category	= GAMEMODE.Name
 ENT.Editable = true
 ENT.RenderFoods = true
 

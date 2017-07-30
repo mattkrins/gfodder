@@ -1,6 +1,5 @@
 GM.Name = "gfodder"
 
-DEVELOPER_MODE = true
 
 if DEVELOPER_MODE then DeriveGamemode( "sandbox" ) print(GM.Name..": Initialized in Developer Mode.") else DeriveGamemode( "base" ) print(GM.Name..": Initialized in StandAlone Mode.") end
 

@@ -6,7 +6,7 @@ ENT.PrintName = "Serving Plate"
 ENT.Author = "StealthPaw"
 ENT.Spawnable = true
 ENT.AdminSpawnable = true
-ENT.Category	= "overcooked"
+ENT.Category	= GAMEMODE.Name
 ENT.Model	= "models/foodnhouseholditems/servingplate.mdl"
 ENT.Material	= ""
 ENT.OCItem	= true
@@ -53,13 +53,16 @@ if SERVER then
 		if !self:HasFood() then return end
 		if self:GetSoup() then
 			self:SetDirty(2)
-			self:EmitSound( "overcooked/drink.mp3" )
+			self:EmitSound( GAMEMODE.Name.."/player/drink.mp3" )
 		else
 			self:SetDirty(1)
-			self:EmitSound( "overcooked/eat.mp3" )
+			self:EmitSound( GAMEMODE.Name.."/player/eat.mp3" )
 		end
-		if IsValid(self.HeldBy) then
-			OrderSystem:Receive(self, self.HeldBy)
+		
+		if self.HeldBy and self.HeldBy.Owner and IsValid(self.HeldBy.Owner) then
+			for k,v in pairs(self:GetFoodTable() or {}) do
+				OrderSystem:Validate(v.Name, self.HeldBy.Owner)
+			end
 		end
 		
 		

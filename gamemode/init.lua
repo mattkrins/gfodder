@@ -1,5 +1,7 @@
 AddCSLuaFile( "shared.lua" )
 include( "shared.lua" )
+resource.AddWorkshop( 108024198 )
+
 local fol = GM.Name.."/gamemode/core/"
 local files, folders = file.Find(fol .. "*", "LUA")
 for k,v in pairs(files) do
@@ -58,9 +60,12 @@ end
 local function Spawn( ply )
 	ply:SetTeam( 2 )
 	ply:StripWeapons()
-	ply:SetModel( "models/player/odessa.mdl" )
 end
 hook.Add( "PlayerSpawn", "PlayerSpawns", Spawn )
+
+function GM:PlayerSetModel( ply )
+	ply:SetModel( "models/player/odessa.mdl" )
+end
 
 local function died( ply )
 	ply.NextSpawn = CurTime() + 2

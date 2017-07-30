@@ -6,7 +6,7 @@ ENT.PrintName = "base_water"
 ENT.Author = "StealthPaw"
 ENT.Spawnable = true
 ENT.AdminSpawnable = true
-ENT.Category	= "overcooked"
+ENT.Category	= GAMEMODE.Name
 ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 
 function ENT:Initialize()

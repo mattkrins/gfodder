@@ -16,6 +16,15 @@ if SERVER then
 			break
 		end
 	end
+	OrderSystem.Validate = function( self, Name, ply )
+		for k,v in pairs(ply.Orders or {}) do
+			if v.Name == Name then
+				self:Remove(v.UNID, ply, true)
+				GamemodeSystem:GiveScore(ply)
+				return true
+			end
+		end return false
+	end
 	OrderSystem.Update = function( self, ply, removing, success )
 		net.Start( "OrderSystemNet" )
 			net.WriteTable( ply.Orders or {} )

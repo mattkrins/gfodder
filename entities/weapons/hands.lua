@@ -55,7 +55,7 @@ function SWEP:PickUp(heldEntity)
 	heldEntity:GetPhysicsObject():SetDamping( 0, 2000 )
 	heldEntity.HeldBy = self
 	self.Holding = heldEntity
-	self:EmitSound( "overcooked/pop_low.mp3" )
+	self:EmitSound( GAMEMODE.Name.."/player/pop_low.mp3" )
 	self:SetHoldType("duel")
 	
 	local identifier = tostring(self).."_pickup"
@@ -79,7 +79,7 @@ end
 function SWEP:DropHeld()
 	if CLIENT then return false end
 	self.Holding = false
-	self:EmitSound( "overcooked/pop_high.mp3" )
+	self:EmitSound( GAMEMODE.Name.."/player/pop_high.mp3" )
 	self:SetHoldType(self.HoldType)
 end
 

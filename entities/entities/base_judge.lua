@@ -6,7 +6,7 @@ ENT.PrintName = "base_judge"
 ENT.Author = "StealthPaw"
 ENT.Spawnable = true
 ENT.AdminSpawnable = true
-ENT.Category	= "overcooked"
+ENT.Category	= GAMEMODE.Name
 ENT.Model	= "models/Eli.mdl"
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -88,11 +88,15 @@ if (SERVER) then
 	local Sequence_Eat = addAnimation("luggageshrug")
 	function ENT:Judge(plate)
 		self:StartSchedule( Sequence_Eat )
+		if (plate:GetDirty() or 0) > 0 then
+			self:EmitSound( badVoices[math.random(#badVoices)] )
+			timer.Simple( 2, function() if IsValid(self) then self:StartSchedule( table.Random(Sequence_Looser) ) self:EmitSound( "ambient/voices/cough"..math.random(1,4)..".wav" ) end end)
+		else
+			self:EmitSound( goodVoices[math.random(#goodVoices)] )
+			timer.Simple( 2, function() if IsValid(self) then self:StartSchedule( Sequence_Winner ) end end)
+		end
 		plate:Eat(self)
-		timer.Simple( 1, function()
-		self:EmitSound( goodVoices[math.random(#goodVoices)] )
-			//if IsValid(self) then self:EmitSound( "ambient/voices/cough"..math.random(1,4)..".wav" ) end
-		end)
+		
 	end
 	local Sequence_Accept = addAnimation("takepackage")
 	local Sequence_Place = addAnimation("Heal")
@@ -110,7 +114,6 @@ if (SERVER) then
 				if IsValid(self) then
 					if IsValid(plate) then self:PlacePlate(plate) end
 					self.Judging = false
-					self:StartSchedule( Sequence_Winner )
 				end
 			end )
 		end)
@@ -124,7 +127,7 @@ if (SERVER) then
 			end
 		end
 		if self.Judging then if !IsValid(self.Judging) then self.Judging = false end return end
-		for _,v in pairs(ents.FindInSphere( self:EyePos()+(self:GetForward()*40), 30 )) do
+		for _,v in pairs(ents.FindInSphere( self:EyePos()+(self:GetForward()*20), 30 )) do
 			if v:GetClass() == "item_plate" and v:HasFood() and !v.Judged then
 				local phy = v:GetPhysicsObject()
 				if IsValid( phy ) then
@@ -149,11 +152,12 @@ if (SERVER) then
 		Sound(GAMEMODE.Name.."/judge/waturudoin.mp3"),
 		Sound(GAMEMODE.Name.."/judge/wipeass.mp3")
 	}
+	local Sequence_Wave = addAnimation("Wave_close")
 	function ENT:OnUse( ply )
 		if self.Judging then return end
 		if (self.NextTalk or 0) >= CurTime() then return end
 		self.NextTalk = CurTime()+10
 		self:EmitSound( idleVoices[math.random(#idleVoices)] )
-		
+		self:StartSchedule( Sequence_Wave )
 	end
 end

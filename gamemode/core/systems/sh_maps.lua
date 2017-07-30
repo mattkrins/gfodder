@@ -44,7 +44,8 @@ end
 Map = Map or {}
 local root = GM.Name.."/gamemode/maps/"
 local files = file.Find(root .. "*", "LUA")
-for k,v in pairs(files) do if string.StripExtension(v) != game.GetMap() then continue end include(root .. v) end
+for k,v in pairs(files) do if string.StripExtension(v) != game.GetMap() then continue end if SERVER then AddCSLuaFile(root ..v) end include(root .. v) end
+
 if CLIENT then return end
 MapSystem = {}
 MapSystem.Spawn = function( self, entClass, entPos, entAngle, entMovable, entHide, entGhost, entModel, entMaterial )
