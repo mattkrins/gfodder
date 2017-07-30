@@ -17,3 +17,7 @@ When you want to try something different, vote to end the game via the F1 menu.
 - The versus mode is not functional yet, just freestyle cooking (not timed) and practice mode.
 - Player options/settings is untested, it may save or it may not.
 - There is a ton more features that are 3/4 of the way done, but they are not stable and so they are disabled for now.
+
+## Thanks to:
+- [GamingMad101](http://steamcommunity.com/id/GamingMad101/) for an excellent [map](https://github.com/mattkrins/gfodder/blob/master/content/maps/).
+- [CHILI's Workshop](http://steamcommunity.com/sharedfiles/filedetails/?id=108024198) for a metric ton of food props.
