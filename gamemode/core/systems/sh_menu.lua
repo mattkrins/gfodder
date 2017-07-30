@@ -30,7 +30,13 @@ if SERVER then
 		if teamCount <= 0 then return false end
 		if #Tables.GMReady >= teamCount/2 then return true end return false
 	end
+	local function purgeFakes(tab) for k, v in pairs(tab) do if !IsValid(v) then table.remove(tab, k) Sync() end end end
 	hook.Add( "Think", "Menu.Think", function()
+		for t, p in pairs(Tables.GMTeams) do purgeFakes(p) end
+		for t, p in pairs(Tables.GMVotes) do purgeFakes(p) end
+		purgeFakes(Tables.GMReady)
+		purgeFakes(Tables.GMFinished)
+		
 		if GamemodeSystem:GetMode() then
 			if GamemodeSystem.Loaded then
 				ConditionalCountDown(5, GMshouldEnd, function()
