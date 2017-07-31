@@ -790,8 +790,12 @@ menu.Frames.Play = function( self )
 						x = 60 if align == TEXT_ALIGN_RIGHT then x = w-60 end
 						draw.SimpleTextOutlined( s.Name, menu.getFont( 42, 600 ), x, h/2, plyTextCol, align, TEXT_ALIGN_CENTER, 1, Color(0,0,0,100) )
 					else
+						local plyTextCol = Color(255,255,255,200)
+						if table.HasValue(Tables.GMReady, ply) then
+							plyTextCol = Color(166,255,160,200)
+						end
 						draw.RoundedBox( 0, 0, 0, w, h, Color(0,0,0,100) )
-						draw.SimpleTextOutlined( s.Name, menu.getFont( 20, 600 ), w/2, h/2, Color(255,255,255,100), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, Color(0,0,0,50) )
+						draw.SimpleTextOutlined( s.Name, menu.getFont( 20, 600 ), w/2, h/2, plyTextCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, Color(0,0,0,50) )
 					end
 				end
 				if !minimal then
@@ -967,7 +971,7 @@ menu.Frames.InGame = function( self )
 		RunConsoleCommand( "GMVoteFinish" )
 	end)
 	if LocalPlayer():IsAdmin() then
-		Buttons:AddButton("!FORCE GAME END!",function(s)
+		Buttons:AddButton("ADMIN FORCE GAME END",function(s)
 			RunConsoleCommand( "GMReset" )
 		end)
 	end
