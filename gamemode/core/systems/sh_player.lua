@@ -26,13 +26,11 @@ if SERVER then
 	end )
 	hook.Add( "PlayerInitialSpawn", "PlayerInitialSpawnPlayer", function ( ply )		
 		local oldSettingPData = ply:GetPData( "settings", false ) or false
-		ply.settings = {}
-		if !oldSettingPData then
-			ply.settings = table.Copy(PlayerSystem.Defaults)
-		else
+		ply.settings = table.Copy(PlayerSystem.Defaults)
+		if oldSettingPData then
 			oldSettings = util.JSONToTable( oldSettingPData or "" ) or {}
 			for k, v in pairs(PlayerSystem.Defaults) do
-				ply.settings[k] = oldSettings[k] or PlayerSystem.Defaults[k]
+				if oldSettings[k] != nil then ply.settings[k] = oldSettings[k] end
 			end
 		end
 		PlayerSystem:Sync(ply)
@@ -47,6 +45,11 @@ else
 	local optionHooks = {
 		["GAME MUSIC"] = function(Name)
 			if !GamemodeSystem:GetPlaying() then return end
+			if !PlayerSystem:GetSetting(Name) then return end
+			MusicSystem:Stop()
+		end,
+		["MENU MUSIC"] = function(Name)
+			if GamemodeSystem:GetPlaying() then return end
 			if !PlayerSystem:GetSetting(Name) then return end
 			MusicSystem:Stop()
 		end

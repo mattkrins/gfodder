@@ -913,7 +913,6 @@ menu.Frames.Main = function( self )
 	end, theme)
 	menu.AddButton("Chef Gallery", mainMenu, padX, fontH, function(s) menu:Select("Gallery") end, theme)
 	menu.AddButton("Loot Box", mainMenu, padX, fontH, function(s) menu:Select("Loot") end, theme)
-	if DEVELOPER_MODE then menu.AddButton("Close", mainMenu, padX, fontH, function(s) menu:Close() end, theme) end
 	
 	local theme = "SubMainMenu"
 	local fontHPad = padY+(#mainMenu.Buttons*fontH)
@@ -926,8 +925,9 @@ menu.Frames.Main = function( self )
 	end
 	//menu.AddButton("Profile", subMenu, padX, fontH, function(s) end, theme)
 	menu.AddButton("Options", subMenu, padX, fontH, function(s) menu:Select("Options") end, theme)
+	if DEVELOPER_MODE or LocalPlayer():IsAdmin() or GamemodeSystem:GetPlaying() then menu.AddButton("Close", subMenu, padX, fontH, function(s) menu:Close() end, theme) end
 	menu.AddButton("Disconnect", subMenu, padX, fontH, function(s) LocalPlayer():ConCommand( "disconnect" ) end, theme)
-	
+
 	return Frame
 end
 menu.Frames.Load = function( self )
