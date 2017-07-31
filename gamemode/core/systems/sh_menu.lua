@@ -564,7 +564,6 @@ menu.Frames.Play = function( self )
 		Frame.OnSelect = function ( s ) menu.Frame:SetKeyboardInputEnabled( false ) end
 		Frame.OnClose = function ( s ) menu.Frame:SetKeyboardInputEnabled( true ) end
 	end
-	
 	local TopBar = menu.vgui("DPanel", 50, 200, Frame:GetWide()-100, 150, Frame)
 	local ActiveGM = GamemodeSystem:GetActive()
 	local ReadyCol = Color(255,255,255,200)
@@ -889,6 +888,13 @@ menu.Frames.Main = function( self )
 	local Frame, w, h = menu.vgui(FrameType, 0, 0, menu:Width(), menu:Height(), menu.Frame)
 	Frame.Paint = function ( s, w, h )
 		//draw.RoundedBox( 0, 0, 0, w, h, Color( 0, 0, 0, 100 ) )
+	end
+	
+	if !IsMounted( 'cstrike' ) then
+		local Mounting = menu.vgui("DPanel", w-250, 100, 200, 20, Frame)
+		Mounting.Paint = function ( s, w, h )
+			draw.SimpleText( "Warning: cstike not mounted.", menu.getFont( 16, 900 ), w , h/2, Color(255,121,91,150), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER )
+		end
 	end
 	
 	menu.Model(Frame:GetWide()/2, 0, w/4, h, Frame, "models/player/odessa.mdl", "menu_combine", "Chef")
