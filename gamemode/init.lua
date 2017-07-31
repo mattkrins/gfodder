@@ -1,5 +1,6 @@
 AddCSLuaFile( "shared.lua" )
 include( "shared.lua" )
+resource.AddWorkshop( 1095898654 ) // Custom Content
 resource.AddWorkshop( 108024198 ) // CHILI's Workshop Food Models
 
 local fol = GM.Name.."/gamemode/core/"
