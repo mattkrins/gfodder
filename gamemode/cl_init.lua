@@ -9,7 +9,6 @@ for _, folder in SortedPairs(folders, true) do
 		include(root.. folder .. "/" ..File)
 	end
 end
-
 function GM:HUDPaint() return false end
 function GM:DrawDeathNotice() end
 function GM:AddDeathNotice() end
@@ -20,6 +19,7 @@ local hide = {
 	CHudSecondaryAmmo = true,
 	CHudCrosshair = true,
 	CHudDamageIndicator = true,
+	//CHudChat = true,
 	CHudWeapon = true
 }
 hook.Add( "HUDShouldDraw", "HideHUD", function( name )
@@ -39,6 +39,135 @@ Font = function( size, weight, italic )
 	OCF_[fontName].weight = w
 	OCF_[fontName].italic = i
 	return fontName
+end
+
+
+
+chat = chat or {}
+chat.log = chat.log or {}
+hook.Add( "OnPlayerChat", "HelloCommand", function( ply, t )
+	if !l then table.insert(chat.log, {ply:Nick(),t,ply:SteamID()}) end
+	if IsValid(chat.box) then chat.box:AddLine(ply:Nick(), t, ply:SteamID()) end
+end )
+//function GM:StartChat() chat.Start() return true end -- This breaks EVERYTHING
+chat.Start = function()
+	if IsValid(chat.popup) then chat.popup:Remove() end
+	chat.popup = vgui.Create("DPanel")
+	chat.popup:SetPos( 0, 0 )
+	chat.popup:SetSize( ScrW(), ScrH() )
+	chat.popup:MakePopup()
+	chat.popup.Paint = function ( s, w, h ) end
+	local under = vgui.Create("DButton", chat.popup)
+	under:SetText( "" )
+	under:SetCursor( "arrow" )
+	under:SetPos( 0, 0 )
+	under:SetSize( chat.popup:GetWide(), chat.popup:GetTall() )
+	under.Paint = function ( s, w, h ) end
+	under.DoClick = function ( s ) if IsValid(chat.popup) then chat.popup:Remove() end end
+	local w = chat.popup:GetWide()/4
+	local h = chat.popup:GetTall()/4
+	local x = 100
+	local y = chat.popup:GetTall()-h-x
+	local box = chat.vgui(x, y, w, h, chat.popup)
+	box.Color = Color( 0, 0, 0, 150 )
+	box.OnEnter = function ( s )
+		if IsValid(chat.popup) then chat.popup:Remove() end
+	end
+	
+	input.SetCursorPos( x+w/4, y+h-10 )
+	
+	timer.Simple(0.1,function()
+		//if IsValid(box) then box.TextEntry:RequestFocus() end
+	end)
+end
+chat.vgui = function( x, y, w, h, parent )
+	local ChatBox = vgui.Create("DPanel", parent)
+	ChatBox:SetPos( x or 0, y or 0 )
+	ChatBox:SetSize( w or 0, h or 0 )
+	ChatBox.Color = Color( 0, 0, 0, 50 )
+	ChatBox.Paint = function ( s, w, h )
+		draw.RoundedBox( 0, 0, 0, w, h, s.Color )
+	end
+	local ChatScroll = vgui.Create("DScrollPanel", ChatBox)
+	ChatScroll:SetPos( 0, 0 )
+	ChatScroll:SetSize( ChatBox:GetWide(), ChatBox:GetTall()-20 )
+	local b = ChatScroll:GetVBar() function b.btnUp:Paint( w, h ) end function b.btnDown:Paint( w, h ) end
+	function b:Paint( w, h ) end
+	function b.btnGrip:Paint( w, h ) draw.RoundedBox( 4, w/2-3, 0, 6, h, Color( 50, 50, 50, 100 ) ) end
+	local ChatLogList = vgui.Create("DListLayout", ChatScroll)
+	ChatLogList:SetPos( 0, 0 )
+	ChatLogList:SetSize( ChatScroll:GetWide(), ChatScroll:GetTall() )
+	chat.box = ChatLogList
+	ChatLogList.Fade = function ( s, a ) for _,v in pairs(s:GetChildren()) do v:AlphaTo( a, 1) end end
+	ChatLogList.AddLine = function ( s, p, t, i, l )
+		if !t or t=="" then return end
+		for k,v in pairs(string.ToTable(t)) do
+			if k == 69 then
+				t = string.sub( t, 1, k ).."\n"..string.sub( t, k+1, string.len(t) )
+			end
+		end
+		local lineWidth= surface.GetTextSize( t )/s:GetWide()
+		local line = vgui.Create("DButton", s)
+		line:SetText( "" )
+		line:SetPos( 0, 0 )
+		line:SetSize( s:GetWide(), 20+(lineWidth*20) )
+		line:SetCursor( "arrow" )
+		line.OnCursorEntered = function (t)
+			s:Fade(255)
+			s.Viewing = true t.Color = Color(150,150,150, 200)
+		end
+		line.OnCursorExited = function (t)
+			s:Fade(50)
+			s.Viewing = false t.Color = Color(117,117,117, 200)
+		end
+		line.DoRightClick = function ( s )
+			local Menu = DermaMenu()
+			Menu:AddOption( "Copy", function() SetClipboardText( s.Message ) end )
+			Menu:AddOption( "See Profile", function()
+				if !s.SteamID then return end
+				local ply = player.GetBySteamID( s.SteamID ) or false
+				if !ply or !IsValid(ply) then return end
+				ply:ShowProfile()
+			end )
+			Menu:Open()
+		end
+		line.Name = p or "ERROR"
+		line.SteamID = i or false
+		line.Message = t
+		line.Color = Color(117,117,117, 200)
+		line.Paint = function ( s, w, h )
+			draw.DrawText( s.Name..": "..s.Message, "DermaDefault", 5, 3, s.Color, TEXT_ALIGN_LEFT )
+		end
+		line:SetAlpha(0)
+		line:AlphaTo( 255, 0.2)
+		s:Add( line )
+		if IsValid(ChatScroll) and !s.Viewing then line:AlphaTo( 50, 1, 2) ChatScroll.VBar:AnimateTo( #s:GetChildren()*19, 0.5, 0, 0.5 ) end
+	end
+	for _,v in pairs(chat.log or {}) do
+		ChatLogList:AddLine(v[1],v[2],v[3])
+	end
+	local Input = vgui.Create("DTextEntry", ChatBox)
+	//ChatBox.TextEntry = Input
+	Input:SetPos( 0, ChatBox:GetTall()-20 )
+	Input:SetSize( ChatBox:GetWide(), 20 )
+	Input:SetText( "" )
+	Input.OnEnter = function( s )
+		if (s.NextChat or 0)>=CurTime() then s:RequestFocus() return end s.NextChat = CurTime()+1
+		if string.len(s:GetValue()) >= 200 then return end
+		if ChatBox.OnEnter then ChatBox:OnEnter(s) end
+		RunConsoleCommand( "say", s:GetValue() )
+		s:SetText( "" )
+		s:RequestFocus()
+	end
+	Input.Paint = function ( s, w, h )
+		local BGcolor = Color( 0, 0, 0, 50 )
+		if s:IsHovered() or s:HasFocus() then BGcolor = Color( 50, 50, 50, 50 ) end
+		draw.RoundedBox( 0, 0, 0, w, h, BGcolor )
+		local prefix = LocalPlayer():Nick()..": "
+		local text = ""
+		if string.len( s:GetValue() or "" ) >= 1 then text = s:GetValue() end
+		draw.SimpleText( prefix..text, "DermaDefault", 5 , h/2, Color(117,117,117, 200), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER )
+	end return ChatBox
 end
 
 local PANEL = {}

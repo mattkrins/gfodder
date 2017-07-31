@@ -171,8 +171,6 @@ menu.Button = function( x, y, w, h, parent, text, theme, action )
 			action(s)
 		end
 	end
-	
-	
 	Button.Paint = function ( s, w, h )
 		local color = s.Theme.Color
 		if s.Hovered then color = s.Theme.Hover end
@@ -485,6 +483,8 @@ menu.Frames.Gallery = function( self )
 		
 	end
 	
+	chat.vgui(50, h-250, 400, 200, Frame)
+	
 	menu.BackButton(Frame:GetWide()-150, Frame:GetTall()-50, Frame)
 	
 	return Frame
@@ -548,6 +548,8 @@ menu.Frames.Options = function( self )
 	//local restore = menu.KeyButton("ENTER", "RESTORE DEFAULTS", Frame:GetWide()-350, Frame:GetTall()-50, 180, 30, Frame, function() menu:Select("Options") end)
 	//menu.BindKey(restore, KEY_ENTER)
 	
+	chat.vgui(50, h-250, 400, 200, Frame)
+	
 	menu.BackButton(Frame:GetWide()-150, Frame:GetTall()-50, Frame)
 	
 	return Frame
@@ -568,18 +570,23 @@ menu.Frames.Play = function( self )
 		Frame.OnSelect = function ( s ) menu.Frame:SetKeyboardInputEnabled( false ) end
 		Frame.OnClose = function ( s ) menu.Frame:SetKeyboardInputEnabled( true ) end
 	end
-	local TopBar = menu.vgui("DPanel", 50, 200, Frame:GetWide()-100, 150, Frame)
 	local ActiveGM = GamemodeSystem:GetActive()
-	local ReadyCol = Color(255,255,255,200)
-	TopBar.Paint = function ( s, w, h )
-		draw.RoundedBox( 0, 0, 0, w, h, Color( 0, 0, 0, 150 ) )
-		draw.SimpleTextOutlined( math.Clamp(GamemodeSystem.Clock:Remaining(),0,9999), menu.getFont( 32, 600 ), 420 , 10, Color(255,255,255,200), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, Color(0,0,0,100) )
-	end
 	local ActiveMode = GamemodeSystem:GetMode()
 	if ActiveGM == "Lobby" then
+		local Counter = menu.vgui("DPanel", w/2-200, 200, 400, 50, Frame)
+		Counter.Paint = function ( s, w, h )
+			local text = "Select a Gamemode to play:"
+			local time = math.Clamp(GamemodeSystem.Clock:Remaining(),0,9999)
+			if (#player.GetAll() > 1) then text = "Vote for a Gamemode:" end
+			if time > 0 then
+				text = "Starting in: "..time
+				if (#player.GetAll() > 1) then text = "Vote ends in "..time end
+			end
+			draw.SimpleTextOutlined( text, menu.getFont( 32, 600 ), w/2 , h/2, Color(255,255,255,200), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, Color(0,0,0,100) )
+		end
 		
 		local playerIcons = {}
-		local PlyIconScroll = menu.vgui("DHorizontalScroller", 50, 380, Frame:GetWide()-100, 30, Frame)
+		local PlyIconScroll = menu.vgui("DHorizontalScroller", w/4, 200, Frame:GetWide()/2, 30, Frame)
 		PlyIconScroll:SetOverlap(-20)
 		PlyIconScroll.AddPlayer = function (s, ply)
 			local icon = menu.vgui( "DPanel", 0, 0, 30, 30, PlyIconScroll, true )
@@ -619,7 +626,6 @@ menu.Frames.Play = function( self )
 		
 		local Scroll = menu.vgui("DHorizontalScroller", 50, 0, 50, 300, Frame)
 		Scroll:SetOverlap(-10)
-		
 		for k,v in pairs(GamemodeSystem.Modes) do
 			if v.CanPlay and !v:CanPlay() then continue end
 			if v.Disabled then continue end
@@ -698,7 +704,11 @@ menu.Frames.Play = function( self )
 			Scroll:AddPanel(GMPanel)
 			Scroll:SetSize(math.Clamp(select(1, Scroll:GetSize())+400,0,Frame:GetWide()-100), select(2, Scroll:GetSize()))
 			Scroll:Center()
-			Scroll:SetPos(select(1, Scroll:GetPos()), Frame:GetTall()/2)
+			PlyIconScroll:SetSize(Scroll:GetWide(), PlyIconScroll:GetTall())
+			PlyIconScroll:SetPos(select(1, Scroll:GetPos()), select(2, Scroll:GetPos())-35)
+			
+			chat.vgui(50, h-250, 400, 200, Frame)
+			
 		end
 	else
 		if !GamemodeSystem:GetPlaying() then
@@ -719,6 +729,25 @@ menu.Frames.Play = function( self )
 			end
 		end
 		
+		local TopBar = menu.vgui("DPanel", 50, 200, Frame:GetWide()-100, 150, Frame)
+		TopBar.Paint = function ( s, w, h )
+			draw.RoundedBox( 0, 0, 0, w, h, Color( 0, 0, 0, 150 ) )
+			draw.SimpleTextOutlined( math.Clamp(GamemodeSystem.Clock:Remaining(),0,9999), menu.getFont( 32, 600 ), 420 , 10, Color(255,255,255,200), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, Color(0,0,0,100) )
+		end
+		
+		local ModeButton = menu.vgui("DButton", 0, 0, 400, 150, TopBar)
+		ModeButton:SetText("")
+		ModeButton.Paint = function ( s, w, h )
+			local lobbyMat = LobbyModeMaterial
+			if ActiveMode then lobbyMat = ActiveMode.Material end
+			menu.DrawMaterial(0, 0, w, h, lobbyMat, Color(255,255,255,255))
+			draw.SimpleTextOutlined( ActiveGM, menu.getFont( 26, 600 ), 10 , 10, Color(255,255,255,200), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, Color(0,0,0,100) )
+		end
+		ModeButton.DoClick = function ( s )
+			//ModeButton:SetVisible(true)
+		end
+		
+		
 		local ReadyUp = menu.Button(420, 100, 150, 32, TopBar)
 		ReadyUp.CanClick = false
 		ReadyUp:SetText("")
@@ -736,7 +765,7 @@ menu.Frames.Play = function( self )
 		end
 		ReadyUp.Think = function ( s )
 			if playerInTeam(LocalPlayer()) then s.CanClick = true else s.CanClick = false end
-			if table.HasValue(Tables.GMReady, LocalPlayer()) then s.Checked = true ReadyCol = Color( 114, 252, 132, 250 ) else s.Checked = false ReadyCol = Color(255,255,255,200) end
+			if table.HasValue(Tables.GMReady, LocalPlayer()) then s.Checked = true else s.Checked = false end
 		end
 		
 		local flip = false
@@ -851,18 +880,9 @@ menu.Frames.Play = function( self )
 			local Spectators_Panel = AddTeam(Frame, Frame:GetWide()-340, 350, 300, Frame:GetTall()-460, "Spectators", true)
 			Spectators_Panel.Name = "Spectators"
 		end
-	end
-	
-	local ModeButton = menu.vgui("DButton", 0, 0, 400, 150, TopBar)
-	ModeButton:SetText("")
-	ModeButton.Paint = function ( s, w, h )
-		local lobbyMat = LobbyModeMaterial
-		if ActiveMode then lobbyMat = ActiveMode.Material end
-		menu.DrawMaterial(0, 0, w, h, lobbyMat, Color(255,255,255,255))
-		draw.SimpleTextOutlined( ActiveGM, menu.getFont( 26, 600 ), 10 , 10, Color(255,255,255,200), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, Color(0,0,0,100) )
-	end
-	ModeButton.DoClick = function ( s )
-		//ModeButton:SetVisible(true)
+		
+		chat.vgui(50, h-250, 400, 200, Frame)
+		
 	end
 	
 	menu.AvatarFrame(w-150, 50, 100, 50, Frame, true)
@@ -919,7 +939,7 @@ menu.Frames.Main = function( self )
 	local fontH = menu:GetTheme(theme).Size
 	local subMenu = menu.vgui("DListLayout", padX, fontHPad+10, w/4, h-fontHPad-20, Frame)
 	if DEVELOPER_MODE and LocalPlayer():IsAdmin() then
-		menu.AddButton("Force GM Reset", subMenu, padX, fontH, function(s)
+		menu.AddButton("Change Gamemode", subMenu, padX, fontH, function(s)
 			RunConsoleCommand( "GMReset" )
 		end, theme)
 	end
@@ -928,6 +948,10 @@ menu.Frames.Main = function( self )
 	if DEVELOPER_MODE or LocalPlayer():IsAdmin() or GamemodeSystem:GetPlaying() then menu.AddButton("Close", subMenu, padX, fontH, function(s) menu:Close() end, theme) end
 	menu.AddButton("Disconnect", subMenu, padX, fontH, function(s) LocalPlayer():ConCommand( "disconnect" ) end, theme)
 
+	
+	chat.vgui(50, h-250, 400, 200, Frame)
+	
+	
 	return Frame
 end
 menu.Frames.Load = function( self )
@@ -1093,8 +1117,10 @@ menu.Init = function( self, initialFrame )
 	if initialFrame and IsValid(self.Frame) then return self:Select(initialFrame) end
 	if IsValid(self.Frame) then self.Frame:Remove() end
 	self.Selected = false
-	self.Frame = self.vgui(FrameType, 0, 300, ScrW(), ScrH())
+	self.Frame = self.vgui("DFrame", 0, 300, ScrW(), ScrH())
 	self.Frame:MoveTo( 0, 0, 0.5)
+	self.Frame:SetTitle("")
+	self.Frame:ShowCloseButton(false)
 	//self.Frame:SetSizable( true )
 	self.Frame:SetAlpha( 0 )
 	self.Frame:AlphaTo( 255, 0.5)
