@@ -111,7 +111,7 @@ GamemodeSystem.ScoreScreen = function( self )
 	Teams:ShowScores()
 end
 GamemodeSystem.GenerateOrders = function( self )
-	self.Orders = {"Sliced Lettuce","Cooked Meat Patty","Bread Slice","Sandwich"}
+	self.Orders = {"Sliced Lettuce","Cooked Meat Patty","Bread Slice","Sandwich","Burger"}
 end
 GamemodeSystem.Init = function( self )
 	local Mode = self:GetMode() or false

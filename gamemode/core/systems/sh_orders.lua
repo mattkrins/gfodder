@@ -3,7 +3,7 @@ OrderSystem.MaxOrders = 5
 if SERVER then
 	util.AddNetworkString( "Order.Net" )
 	OrderSystem.Sync = function( self, ply ) net.Start( "Order.Net" ) net.WriteTable(ply.Orders or {}) net.Send(ply) end
-	if DEVELOPER_MODE then concommand.Add("OrderSystem.Add", function(ply, cmd, args) if !ply:IsAdmin() then return end OrderSystem:Add(args[1],ply,20) end) end
+	concommand.Add("OrderSystem.Add", function(ply, cmd, args) if !ply:IsAdmin() then return end OrderSystem:Add(args[1],ply,20) end)
 	OrderSystem.Add = function( self, Name, ply, Time )
 		local foodTable = FoodSystem:Food(Name)
 		if !foodTable or !IsValid(ply) then return false end
