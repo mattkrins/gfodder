@@ -48,6 +48,7 @@ chat.log = chat.log or {}
 hook.Add( "OnPlayerChat", "HelloCommand", function( ply, t )
 	if !l then table.insert(chat.log, {ply:Nick(),t,ply:SteamID()}) end
 	if IsValid(chat.box) then chat.box:AddLine(ply:Nick(), t, ply:SteamID()) end
+	if #chat.log > 20 then table.remove(chat.log, 1) end
 end )
 //function GM:StartChat() chat.Start() return true end -- This breaks EVERYTHING
 chat.Start = function()
@@ -80,14 +81,17 @@ chat.Start = function()
 		//if IsValid(box) then box.TextEntry:RequestFocus() end
 	end)
 end
+local cB
 chat.vgui = function( x, y, w, h, parent )
-	local ChatBox = vgui.Create("DPanel", parent)
+	if IsValid(cB) then cB:Remove() end
+	local ChatBox = vgui.Create("DPanel", parent) cB = ChatBox
 	ChatBox:SetPos( x or 0, y or 0 )
 	ChatBox:SetSize( w or 0, h or 0 )
 	ChatBox.Color = Color( 0, 0, 0, 50 )
 	ChatBox.Paint = function ( s, w, h )
 		draw.RoundedBox( 0, 0, 0, w, h, s.Color )
 	end
+	ChatBox.Think = function ( s ) if !IsValid(s:GetParent()) then s:Remove() end end
 	local ChatScroll = vgui.Create("DScrollPanel", ChatBox)
 	ChatScroll:SetPos( 0, 0 )
 	ChatScroll:SetSize( ChatBox:GetWide(), ChatBox:GetTall()-20 )
@@ -147,18 +151,27 @@ chat.vgui = function( x, y, w, h, parent )
 		ChatLogList:AddLine(v[1],v[2],v[3])
 	end
 	local Input = vgui.Create("DTextEntry", ChatBox)
-	//ChatBox.TextEntry = Input
+	ChatBox.TextEntry = Input
 	Input:SetPos( 0, ChatBox:GetTall()-20 )
 	Input:SetSize( ChatBox:GetWide(), 20 )
 	Input:SetText( "" )
+	Input.CanEnter = function( s )
+		if string.len(s:GetValue()) >= 200 then return false end
+		if string.Trim( s:GetValue() ) == "" or string.Trim( s:GetValue() ) == " " then s:SetText( "" ) return false end
+		return true
+	end
+	Input.OnValueChange = function( s )
+		if !s:CanEnter() then s.Color = Color(255,117,117, 100) return end
+	end
 	Input.OnEnter = function( s )
-		if (s.NextChat or 0)>=CurTime() then s:RequestFocus() return end s.NextChat = CurTime()+1
-		if string.len(s:GetValue()) >= 200 then return end
+		if (s.NextChat or 0)>=CurTime() or !s:CanEnter() then s:RequestFocus() return end s.NextChat = CurTime()+1
 		if ChatBox.OnEnter then ChatBox:OnEnter(s) end
 		RunConsoleCommand( "say", s:GetValue() )
+		s.Color = Color(117,117,117, 200)
 		s:SetText( "" )
 		s:RequestFocus()
 	end
+	Input.Color = Color(117,117,117, 200)
 	Input.Paint = function ( s, w, h )
 		local BGcolor = Color( 0, 0, 0, 50 )
 		if s:IsHovered() or s:HasFocus() then BGcolor = Color( 50, 50, 50, 50 ) end
@@ -166,7 +179,7 @@ chat.vgui = function( x, y, w, h, parent )
 		local prefix = LocalPlayer():Nick()..": "
 		local text = ""
 		if string.len( s:GetValue() or "" ) >= 1 then text = s:GetValue() end
-		draw.SimpleText( prefix..text, "DermaDefault", 5 , h/2, Color(117,117,117, 200), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER )
+		draw.SimpleText( prefix..text, "DermaDefault", 5 , h/2, s.Color, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER )
 	end return ChatBox
 end
 

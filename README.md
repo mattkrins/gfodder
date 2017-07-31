@@ -18,5 +18,5 @@ When you want to try something different, vote to end the game via the F1 menu.
 - [GamingMad101](http://steamcommunity.com/id/GamingMad101/) for an excellent [map](https://github.com/mattkrins/gfodder/blob/master/content/maps/).
 
 ## Custom Content:
-- [CHILI's Food Props](http://steamcommunity.com/sharedfiles/filedetails/?id=108024198)
 - [gFodder Content](http://steamcommunity.com/sharedfiles/filedetails/?id=1095898654)
+- [CHILI's Food Props](http://steamcommunity.com/sharedfiles/filedetails/?id=108024198)
