@@ -105,8 +105,10 @@ if SERVER then
 	end
 	function ENT:TouchFood( food, foodEntity ) end
 	function ENT:CanTouchFood( food, foodEntity ) return true end
+	function ENT:OnTouch( entity ) end
 	function ENT:Touch( entity )
 		if (self.NextTouch or 0) > CurTime() then return end self.NextTouch=CurTime()+0.1
+		self:OnTouch(entity)
 		if !IsValid(entity) or entity:GetClass() != self.FoodClass then return end
 		if !entity.GetFood or !entity:GetFood() or entity:GetFood() == "" then return end
 		if #self:GetFoodTable() >= self.CanHold then return end

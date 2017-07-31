@@ -84,7 +84,7 @@ if SERVER then
 	function ENT:Think( ply, tr, ClassName )
 		if self.Contained and !self:Contains() then self.Contained = false end
 		for k,v in pairs(self:Inside()) do
-			if v:IsOnFire() then v:Extinguish() end
+			if v:IsOnFire() then v:Extinguish() end	
 			if table.HasValue(CanFloat, v:GetClass()) and !table.HasValue(self.Contained or {}, v) then self:AddDish( v ) break end
 		end
 	end
