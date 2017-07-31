@@ -938,7 +938,7 @@ menu.Frames.Main = function( self )
 	local fontHPad = padY+(#mainMenu.Buttons*fontH)
 	local fontH = menu:GetTheme(theme).Size
 	local subMenu = menu.vgui("DListLayout", padX, fontHPad+10, w/4, h-fontHPad-20, Frame)
-	if DEVELOPER_MODE and LocalPlayer():IsAdmin() then
+	if LocalPlayer():IsAdmin() then
 		menu.AddButton("Change Gamemode", subMenu, padX, fontH, function(s)
 			RunConsoleCommand( "GMReset" )
 		end, theme)

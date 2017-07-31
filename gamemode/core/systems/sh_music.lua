@@ -11,8 +11,7 @@ end
 net.Receive( "MusicSystem.Net", function() local fileName = net.ReadString() or false if fileName and fileName!="" then surface.PlaySound( fileName ) end end )
 local Music = {}
 Audio = Audio or false
-Music.File = "sound/overcooked/music/level1.mp3"
-Music.Volume = 0.5
+Music.Volume = 0.3
 Music.Stop = function( self )
 	if !Audio or !IsValid( Audio ) then return false end
 	self.Playing = false
