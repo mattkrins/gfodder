@@ -28,6 +28,7 @@ if SERVER then
 		if ( data.Speed > 150 ) then self:EmitSound( Sound( "ambient/materials/dinnerplates"..math.random(1,3)..".wav" ) ) end
 	end
 	function ENT:Clean() self:SetDirty(0) self.Judged = false end
+	function ENT:ReInit() self:SetSoup(false) self:RemoveAllFood() self:SetDirty(0) self.Judged = false end
 	function ENT:OnAdd( Name )
 		self.Judged = false
 		if self:GetSoup() then self:EmitSound( "ambient/water/rain_drip3.wav" ) end

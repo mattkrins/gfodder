@@ -7,8 +7,11 @@ if CLIENT then
 	concommand.Add("UpdateTime", function(ply, cmd, args) if !args[1] then return end timeLimit = tonumber(args[1]) end)
 	hook.Add( "HUDPaint", "GamemodeSystem.HUDPaint", function()
 		if DEVELOPER_MODE then draw.SimpleTextOutlined( "Active GM: "..GamemodeSystem:GetActive(), "CloseCaption_Bold", ScrW()-20, 20, Color( 255, 255, 255, 200 ), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP, 2, Color( 0, 0, 0, 50 ) ) end
+		local Mode = GamemodeSystem:GetMode() or false
+		if Mode then if Mode.HUDPaint then Mode:HUDPaint() end end
 		if GetGlobalBool( "GMShowCoins", false ) then
-			local score = LocalPlayer():GetNWFloat( 'score', 0 )
+			//local score = LocalPlayer():GetNWFloat( 'score', 0 )
+			local score = Teams:score(LocalPlayer().teamID)
 			draw.SimpleTextOutlined( "SCORE", Font( 40, 900, false ), 10, ScrH()-60, Color( 255, 255, 255, 100 ), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, Color( 0, 0, 0, 50 ) )
 			draw.SimpleTextOutlined( score, Font( 60, 900, false ), 10, ScrH()-5, LerpColor(pulse,Color( 255, 237, 104, 100 ),Color( 0, 237, 104, 220 )), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, LerpColor(pulse,Color( 0, 0, 0, 50 ),Color( 0, 50, 0, 200 )) )
 			if pulse > 0 then pulse = math.Clamp(pulse - 0.001,0,1) end
@@ -53,8 +56,6 @@ if CLIENT then
 				surface.DrawTexturedRect(x+5+wide/2-((high-5)/2), 0, high-5, high-5)
 			end
 		end
-		local Mode = GamemodeSystem:GetMode() or false
-		if Mode then if Mode.HUDPaint then Mode:HUDPaint() end end
 	end )
 end
 GamemodeSystem.Modes = {}
@@ -86,7 +87,7 @@ GamemodeSystem.SetActive = function( self, mN )
 	local joinDefault = false
 	local Mode = self:Get(mN) or false
 	if Mode then
-		local teams = {1}
+		local teams = {"1"}
 		if Mode.Teams then teams = Mode.Teams end
 		if #teams <= 1 then joinDefault = teams[1] end
 	end
@@ -100,7 +101,14 @@ GamemodeSystem.Score = function( self, TeamID )
 end
 GamemodeSystem.GiveScore = function( self, ply )
 	ply:SetNWFloat( 'score', ply:GetNWFloat( 'score', 0 ) + 100 )
+	Teams:playerScore(ply)
 	ply:ConCommand( "PulseScore" )
+end
+GamemodeSystem.ScoreScreen = function( self )
+	self:ShowTimer(false)
+	self:ShowCoins(false)
+	OrderSystem:Clear()
+	Teams:ShowScores()
 end
 GamemodeSystem.GenerateOrders = function( self )
 	self.Orders = {"Sliced Lettuce","Cooked Meat Patty","Bread Slice","Sandwich"}
@@ -108,10 +116,15 @@ end
 GamemodeSystem.Init = function( self )
 	local Mode = self:GetMode() or false
 	if !Mode then return false end
+	for t,p in pairs(MenuSystem:GetTable("GMTeams") or {}) do
+		for k,v in pairs(p) do
+			Teams:include(t, v)
+			if t == "Spectators" then continue end
+			self:Spawn(v, t, k)
+			v:Lock()
+		end
+	end
 	for _,v in pairs(player.GetAll()) do
-		v:UnSpectate()
-		v:Spawn()
-		v:Lock()
 		v:ConCommand( "closeMenu" )
 	end
 	if Mode.Init then Mode:Init() end
@@ -123,34 +136,36 @@ GamemodeSystem.Play = function( self )
 	local Mode = self:GetMode() or false
 	if Mode.Play then Mode:Play() end
 	self:SetPlaying(true)
-	for _,v in pairs(player.GetAll()) do
+	for _,v in pairs(Teams:allPlayers()) do
 		v:UnLock()
 	end
 end
-GamemodeSystem.Spawn = function( self, ply )
-	local teamID = 0
+GamemodeSystem.Spawn = function( self, ply, teamID, teamPos )
 	local spawnPos = false
-	for k,v in pairs(MenuSystem:GetTable("GMTeams") or {}) do
-		teamID = teamID + 1
-		if Map.PlayerSpawns and Map.PlayerSpawns[teamID] then
-			spawnPos = Map.PlayerSpawns[teamID][table.KeyFromValue( v, ply )] or table.Random(Map.PlayerSpawns[teamID])
-			break
+	if Map and Map.PlayerSpawns then 
+		local teamTable = false
+		if Map.PlayerSpawns[tonumber(teamID)] then teamTable = Map.PlayerSpawns[tonumber(teamID)] end
+		if Map.PlayerSpawns[teamID] then teamTable = Map.PlayerSpawns[teamID] end
+		if teamTable then
+			if teamPos and teamTable[teamPos] then spawnPos = teamTable[teamPos] end
+			if !spawnPos then spawnPos = table.Random(teamTable) end
 		end
 	end
-	if !spawnPos then
-		for _,v in pairs(Map.PlayerSpawns or {}) do
-			spawnPos = table.Random(v)
-		end
-	end
+	ply:SetTeam( 1 )
+	ply:Spawn()
 	if spawnPos then ply:SetPos(spawnPos) end
-
+	local judge = false
+	for _, v in pairs( ents.FindByClass( "base_judge" ) ) do judge = v break end
+	if judge then
+		ply:SetEyeAngles( ( judge:GetPos() - ply:GetShootPos() ):Angle() )
+	end
+	
 end
 GamemodeSystem.Load = function( self )
 	local Mode = self:GetMode() or false
 	if !Mode then return false end
 	for _,v in pairs(player.GetAll()) do
 		v:ConCommand( "menu Load" )
-		self:Spawn(v)
 	end
 	if Mode.Load then Mode:Load() end
 	self.Loaded = true
@@ -174,6 +189,7 @@ GamemodeSystem.Think = function( self )
 end
 hook.Add( "Think", "GamemodeSystem.Think", function() GamemodeSystem:Think() end)
 GamemodeSystem.Reset = function( self )
+	GamemodeSystem.Music:Stop()
 	local Mode = self:GetMode() or false
 	self:SetPlaying(false)
 	self:ShowTimer(false)
@@ -181,20 +197,20 @@ GamemodeSystem.Reset = function( self )
 	self.Loaded = false
 	checkMusic = false
 	NextSpeed = 0
+	Teams:SaveResults()
 	if Mode and Mode.Reset then Mode:Reset() end
 	if MenuSystem and MenuSystem.Reset then MenuSystem:Reset() end
 	self:SetActive("Lobby")
 	self.Clock:Reset()
 	OrderSystem:Clear()
+	Teams:Reset()
 	for _,v in pairs(player.GetAll()) do
 		v:UnLock()
 		v:StripWeapons()
+		v:SetTeam( TEAM_SPECTATOR )
 		v:Spectate( OBS_MODE_ROAMING )
-		v:SetObserverMode( OBS_MODE_ROAMING )
 		//v:SetPData( "money", v:GetNWFloat( 'score', 0 ) )
 		//v:SetNWFloat( 'score', 0 )
-		
-		
 	end
 	if MapSystem and MapSystem.Reset then MapSystem:Reset() end
 end
@@ -202,7 +218,7 @@ concommand.Add("GMReset", function(ply, cmd, args) if !ply:IsAdmin() then return
 GamemodeSystem.Clock.Add = function( self, Time ) SetGlobalInt( "Clock", CurTime() + Time or 60 ) for _,v in pairs(player.GetAll()) do v:ConCommand( "UpdateTime "..(Time or 60) ) end end
 GamemodeSystem.Clock.Reset = function( self ) SetGlobalInt( "Clock", 0 ) end
 GamemodeSystem.Music.Add = function( self, path, shouldSpeed )
-	for _,v in pairs(player.GetAll()) do if !PlayerSystem:GetSetting("GAME MUSIC", v) then continue end v:ConCommand( 'Music_Play "'..path..'"' ) end
+	for _,v in pairs(Teams:allPlayers({"Spectators"})) do if !PlayerSystem:GetSetting("GAME MUSIC", v) then continue end v:ConCommand( 'Music_Play "'..path..'"' ) end
 	checkMusic = shouldSpeed or false
 end
 GamemodeSystem.Music.Stop = function( self ) for _,v in pairs(player.GetAll()) do v:ConCommand( 'Music_Stop' ) end end

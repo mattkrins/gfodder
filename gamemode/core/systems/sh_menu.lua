@@ -1,16 +1,13 @@
-function GM:ShowHelp( ply ) ply:ConCommand("menu") end
 local Tables = {GMVotes={},GMTeams={},GMReady={},GMFinished={}}
 local function playerInTeam(ply)
 	for t, p in pairs(Tables.GMTeams) do
 		if table.HasValue(p or {}, ply) then return t end
 	end return false
 end
-local function GMshouldEnd()
-	if #Tables.GMFinished >=1 and #Tables.GMFinished >= #player.GetAll()/2 then return true end return false
-end
+local function GMshouldEnd() if #Tables.GMFinished >=1 and #Tables.GMFinished > #player.GetAll()/2 then return true end return false end
 if SERVER then
+	function GM:ShowHelp( ply ) ply:ConCommand("menu") end
 	util.AddNetworkString( "Menu.Net" )
-	
 	local function Sync() net.Start( "Menu.Net" ) net.WriteTable(Tables) net.Broadcast() end
 	local Counting = false
 	local function ConditionalCountDown(time, condition, run, noClock)
@@ -22,12 +19,14 @@ if SERVER then
 		local winner = false
 		local count = 0
 		for g, p in pairs(Tables.GMVotes) do if #p > count then count = #p winner = g end end
+		if count <= (#player.GetAll()/2) then return false end
 		return winner
 	end
 	local function shouldStart()
 		local teamCount = 0
 		for t, p in pairs(Tables.GMTeams) do if t == "Spectators" then continue end teamCount = teamCount + #p end
 		if teamCount <= 0 then return false end
+		if #Tables.GMReady <= (#player.GetAll()/2) then return false end
 		if #Tables.GMReady >= teamCount/2 then return true end return false
 	end
 	local function purgeFakes(tab) for k, v in pairs(tab) do if !IsValid(v) then table.remove(tab, k) Sync() end end end
@@ -107,7 +106,12 @@ if SERVER then
 	end)
 	concommand.Add("GMVoteFinish", function(ply, cmd, args)
 		//if !GamemodeSystem:GetMode() then return end
-		if table.HasValue(Tables.GMFinished, ply) then table.RemoveByValue(Tables.GMFinished, ply) else table.insert(Tables.GMFinished, ply) end
+		if table.HasValue(Tables.GMFinished, ply) then table.RemoveByValue(Tables.GMFinished, ply) else
+			if (ply.NextVote or 0) >= CurTime() then return end
+			ply.NextVote = CurTime() + 15
+			table.insert(Tables.GMFinished, ply)
+			for _, v in pairs( player.GetAll() ) do v:ChatPrint( ply:Nick().." voted to end game." ) end
+		end
 		Sync()
 	end)
 	concommand.Add("OpenBox", function(ply, cmd, args)
@@ -746,12 +750,13 @@ menu.Frames.Play = function( self )
 			Team_Button.Paint = function (s, w, h)
 				if GamemodeSystem:GetPlaying() then return end
 				local txt = "Join" local col = Color(128,221,165,200)
-				if Tables.GMTeams[k] and table.HasValue(Tables.GMTeams[k], LocalPlayer()) then txt = "Leave" col = Color(219,127,127,200) end
+				if (table.Count(Tables.GMTeams)>=2) and Tables.GMTeams[k] and table.HasValue(Tables.GMTeams[k], LocalPlayer()) then txt = "Leave" col = Color(219,127,127,200) end
 				draw.SimpleTextOutlined( txt, menu.getFont( 30, 600 ), w, h/2, col, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER, 1, Color(0,0,0,100) )
 			end
 			Team_Button.DoClick = function(s)
 				if ReadyUp.Checked then return end
 				if GamemodeSystem:GetPlaying() then return end
+				if Tables.GMTeams[k] and table.HasValue(Tables.GMTeams[k], LocalPlayer()) and (table.Count(Tables.GMTeams)<=1) then return end
 				RunConsoleCommand( "GMJoinTeam", k )
 			end
 			local Team_Scroll = menu.vgui("DScrollPanel", 0, 50, Team_Panel:GetWide(), Team_Panel:GetTall()-50, Team_Panel)
@@ -914,7 +919,7 @@ menu.Frames.Main = function( self )
 	local fontHPad = padY+(#mainMenu.Buttons*fontH)
 	local fontH = menu:GetTheme(theme).Size
 	local subMenu = menu.vgui("DListLayout", padX, fontHPad+10, w/4, h-fontHPad-20, Frame)
-	if DEVELOPER_MODE then
+	if DEVELOPER_MODE and LocalPlayer():IsAdmin() then
 		menu.AddButton("Force GM Reset", subMenu, padX, fontH, function(s)
 			RunConsoleCommand( "GMReset" )
 		end, theme)
@@ -936,6 +941,14 @@ menu.Frames.Load = function( self )
 		surface.SetDrawColor( Color( 200, 200, 255, 25 ) )
 		surface.DrawTexturedRectRotated( 100, h-100, 25, 25, spin )
 	end
+	return Frame
+end
+
+menu.Frames.ScoreScreen = function( self )
+	local Frame, w, h = menu.vgui(FrameType, 0, 0, menu:Width(), menu:Height(), menu.Frame, true)
+	
+	menu.BackButton(Frame:GetWide()-150, Frame:GetTall()-50, Frame)
+
 	return Frame
 end
 
@@ -971,7 +984,11 @@ menu.Frames.InGame = function( self )
 	Buttons:AddButton("SHOW LOBBY",function(s)
 		menu:Select("Play")
 	end)
+	local ShowCount = false
 	local voter = Buttons:AddButton("VOTE RESET",function(s)
+		if table.HasValue(Tables.GMFinished, LocalPlayer()) then return RunConsoleCommand( "GMVoteFinish" ) end
+		if (LocalPlayer().NextVote or 0) >= CurTime() then ShowCount = LocalPlayer().NextVote return end
+		LocalPlayer().NextVote = CurTime() + 15
 		RunConsoleCommand( "GMVoteFinish" )
 	end)
 	if LocalPlayer():IsAdmin() then
@@ -981,6 +998,7 @@ menu.Frames.InGame = function( self )
 	end
 	voter.textOveride = function ( s )
 		if GMshouldEnd() then return "GAME ENDING..." end
+		if ShowCount and ShowCount > CurTime() then return "VOTE AGAIN IN:"..math.floor(LocalPlayer().NextVote - CurTime()) end
 		if #Tables.GMFinished <= 0 then return "END GAME" end
 		return "END GAME ("..#Tables.GMFinished.."/"..#player.GetAll()..")"
 	end
@@ -1004,13 +1022,14 @@ menu.Frames.InGame = function( self )
 
 	return Frame
 end
+local playedIntro = false
 menu.Frames.Intro = function( self )
 	local Frame, w, h = menu.vgui(FrameType, 0, 0, menu:Width(), menu:Height(), menu.Frame, true)
 	local Underlay = menu.vgui( "DPanel", 0, h, w, h, Frame, true )
 	Underlay.Paint = function ( s, w, h )
 		menu.DrawMaterial(w/2-300, h/2-60, 600, 120, TitleMaterial, Color(255,255,255,255))
 	end
-	if PlayerSystem:GetSetting("MENU MUSIC") then MusicSystem:Play( "sound/"..GAMEMODE.Name.."/music/intro_long.mp3" ) end
+	if PlayerSystem:GetSetting("MENU MUSIC") and !playedIntro then playedIntro = true MusicSystem:Play( "sound/"..GAMEMODE.Name.."/music/intro_long.mp3" ) end
 	Frame.OnSelect = function ( s )
 		Underlay:MoveTo(0,0,3,0,-1,function()
 			surface.PlaySound(GAMEMODE.Name.."/gui/knife_slash.mp3")
@@ -1081,11 +1100,9 @@ menu.Init = function( self, initialFrame )
 	self.Frame:AlphaTo( 255, 0.5)
 	self.Frame:MakePopup()
 	self.Frame.startTime = SysTime()
-	local UseCamera = true
-	if GamemodeSystem:GetPlaying() then UseCamera = false end
 	if Map and Map.Camera then self.Frame.Camera = Map.Camera end
 	self.Frame.Paint = function ( s, w, h )
-		if UseCamera and s.Camera then
+		if !GamemodeSystem:GetPlaying() and s.Camera then
 			render.RenderView( { origin = s.Camera[1], angles = s.Camera[2],x=0,y=0,w=w,h=h,drawviewmodel=false } )
 		end
 		Derma_DrawBackgroundBlur( s, s.startTime )
@@ -1126,9 +1143,7 @@ menu.vgui = function( class, x, y, w, h, parent, noPaint )
 	if noPaint then Element.Paint = function () end end
 	return Element, (w or 0), (h or 0)
 end
-concommand.Add("menu", function(ply,cmd,args) local allowed = {"Load","Play","Intro"} if args and args[1] and table.HasValue(allowed, args[1]) then menu:Init(args[1]) else menu:Init() end end )
+concommand.Add("menu", function(ply,cmd,args) local allowed = {"Load","Play","Intro","ScoreScreen"} if args and args[1] and table.HasValue(allowed, args[1]) then menu:Init(args[1]) else menu:Init() end end )
 concommand.Add("closeMenu", function() menu:Close() end)
 function GM:ScoreboardShow() if GamemodeSystem:GetPlaying() and !IsValid(menu.Frame) then menu:Init("InGame") end end
-hook.Add( "OnSpawnMenuOpen", "OnSpawnMenuOpenFrame", function()
-	if GamemodeSystem:GetPlaying() and !IsValid(menu.Frame) then menu:Init("InGame") end
-end )
+hook.Add( "OnSpawnMenuOpen", "OnSpawnMenuOpenFrame", function() if GamemodeSystem:GetPlaying() and !IsValid(menu.Frame) then menu:Init("InGame") end end )

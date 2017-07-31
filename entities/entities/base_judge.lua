@@ -155,6 +155,7 @@ if (SERVER) then
 	local Sequence_Wave = addAnimation("Wave_close")
 	function ENT:OnUse( ply )
 		if self.Judging then return end
+		if ( ply:Unassigned() ) then return end
 		if (self.NextTalk or 0) >= CurTime() then return end
 		self.NextTalk = CurTime()+10
 		self:EmitSound( idleVoices[math.random(#idleVoices)] )

@@ -40,6 +40,7 @@ end
 
 if SERVER then
 	concommand.Add("Fridge_Interact", function(ply, cmd, args)
+		if ( ply:Unassigned() ) then return end
 		local tr = ply:GetEyeTrace( )
 		local ent = tr.Entity
 		if !IsValid(ent) or ent:GetClass() != "base_fridge" then return end
@@ -62,6 +63,7 @@ if SERVER then
 	end
 	function ENT:Use(act, ply)
 		if (self.NextUse or 0) >= CurTime() then return end self.NextUse = CurTime() + 1
+		if ( ply:Unassigned() ) then return end
 		self:Close()
 		ply:ConCommand( "Fridge_Inspect" )
 		self.LastUser = ply

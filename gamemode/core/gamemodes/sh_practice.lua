@@ -17,12 +17,10 @@ if SERVER then
 		GamemodeSystem.Clock:Add(300)
 		MusicSystem:PlaySound(GAMEMODE.Name.."/gui/knife_slash.mp3")
 	end
-	local maxOrders = 6
 	GM.Think = function(s)
 		if #GamemodeSystem.Orders <= 0 then return end
 		for _,v in pairs(player.GetAll()) do
 			v.Orders = v.Orders or {}
-			if (#v.Orders or 0) >= maxOrders then continue end
 			if (v.lastOrder or 0) >= CurTime() then continue end
 			OrderSystem:Add(table.Random(GamemodeSystem.Orders), v, math.random(50,70))
 			v.lastOrder = CurTime()+math.random(40,50)
@@ -30,7 +28,6 @@ if SERVER then
 	end
 	GM.ShouldReset = function(s) if GamemodeSystem.Clock:Remaining() < 0 then return true end end
 	GM.Reset = function(s)
-		GamemodeSystem.Music:Stop()
 		MusicSystem:PlaySound(GAMEMODE.Name.."/effects/ding_tripple.mp3")
 	end
 end
