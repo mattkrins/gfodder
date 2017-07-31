@@ -886,7 +886,9 @@ surface.CreateFont( "MainMenu", {font = "Trebuchet24",size = 60,weight = 700,ant
 surface.CreateFont( "SubMainMenu", {font = "Trebuchet24",size = 30,weight = 700,antialias = true,shadow = false,outline = false,italic = false})
 menu.Frames.Main = function( self )
 	local Frame, w, h = menu.vgui(FrameType, 0, 0, menu:Width(), menu:Height(), menu.Frame)
-	Frame.Paint = function ( s, w, h ) end
+	Frame.Paint = function ( s, w, h )
+		//draw.RoundedBox( 0, 0, 0, w, h, Color( 0, 0, 0, 100 ) )
+	end
 	
 	if !IsMounted( 'cstrike' ) then
 		local Mounting = menu.vgui("DPanel", w-250, 100, 200, 20, Frame)
