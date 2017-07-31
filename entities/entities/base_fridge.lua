@@ -123,6 +123,7 @@ if CLIENT then
 			end
 		end
 	end
+	local ErrorMaterial = Material( "icon32/folder.png", "noclamp smooth" )
 	local FridgeMenu
 	local function Open()
 		if IsValid(FridgeMenu) then FridgeMenu:Remove() end
@@ -149,10 +150,9 @@ if CLIENT then
 		local size = FoodsList:GetTall()
 		local foods = {"Meat","Tomato","Lettuce","Bread"}
 		for k, v in pairs(foods) do
-			local fT = FoodSystem:Food(v)
-			if !fT.Material then continue end
+			local fT = FoodSystem:Food(v) or {}
 			local foodButton = FoodsList:Add( "DButton" )
-			foodButton.Material = fT.Material
+			foodButton.Material = fT.Material or ErrorMaterial
 			foodButton:SetText( "" )
 			foodButton:SetSize( size, size )
 			foodButton.Paint = function ( s, w, h )
@@ -160,6 +160,7 @@ if CLIENT then
 				surface.SetDrawColor(Color(255,255,255,255))
 				surface.SetMaterial( s.Material )
 				surface.DrawTexturedRect(5, 5, w-10, h-10)
+				if s:IsHovered() then draw.SimpleTextOutlined( v, Font( 20, 900 ), w/2 , h-10, Color(255,255,255,150), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM,1,Color(0,0,0,50) ) end
 			end
 			foodButton.DoClick = function ( s, w, h )
 				RunConsoleCommand( "Fridge_Interact", v )
