@@ -62,6 +62,7 @@ MapSystem.Reset = function( self )
 	local Unmovable = {}
 	for _,v in pairs(ents.GetAll()) do
 		if v:GetClass() == "base_food" then v:Remove() continue end
+		if v:IsOnFire() then v:Extinguish() end
 		if v.InitAngle then
 			v:GetPhysicsObject():SetVelocityInstantaneous( Vector(0,0,0) )
 			v:SetAngles(v.InitAngle)

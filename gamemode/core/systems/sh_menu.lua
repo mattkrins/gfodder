@@ -782,8 +782,13 @@ menu.Frames.Play = function( self )
 						draw.RoundedBox( 0, 0, 0, w, h, Col1 )
 						local x = 0 if align == TEXT_ALIGN_RIGHT then x = w-5 end
 						draw.RoundedBox( 0, x, 0, 5, h, Col2 )
+						local plyTextCol = Color(255,255,255,200)
+						if table.HasValue(Tables.GMReady, ply) then
+							plyTextCol = Color(166,255,160,200)
+							draw.RoundedBox( 0, x, 0, 5, h, plyTextCol )
+						end
 						x = 60 if align == TEXT_ALIGN_RIGHT then x = w-60 end
-						draw.SimpleTextOutlined( s.Name, menu.getFont( 42, 600 ), x, h/2, Color(255,255,255,200), align, TEXT_ALIGN_CENTER, 1, Color(0,0,0,100) )
+						draw.SimpleTextOutlined( s.Name, menu.getFont( 42, 600 ), x, h/2, plyTextCol, align, TEXT_ALIGN_CENTER, 1, Color(0,0,0,100) )
 					else
 						draw.RoundedBox( 0, 0, 0, w, h, Color(0,0,0,100) )
 						draw.SimpleTextOutlined( s.Name, menu.getFont( 20, 600 ), w/2, h/2, Color(255,255,255,100), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, Color(0,0,0,50) )
