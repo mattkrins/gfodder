@@ -62,7 +62,7 @@ MapSystem.Reset = function( self )
 	local Unmovable = {}
 	for _,v in pairs(ents.GetAll()) do
 		if v:GetClass() == "base_food" then v:Remove() continue end
-		if v:IsOnFire() then v:Extinguish() end
+		v:Extinguish()
 		if v.InitAngle then
 			v:GetPhysicsObject():SetVelocityInstantaneous( Vector(0,0,0) )
 			v:SetAngles(v.InitAngle)
@@ -72,6 +72,7 @@ MapSystem.Reset = function( self )
 			v:SetPos(v.InitVector)
 		end
 		if table.HasValue(Unmoving, v:GetClass()) then table.insert(Unmovable, v) end
+		if v.Cooker and v:HasFood() then v:RemoveAllFood() end
 	end
 	for _,v in pairs(Unmovable) do
 		for _,u in pairs(Unmovable) do
