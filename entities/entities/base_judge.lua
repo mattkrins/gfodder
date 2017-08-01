@@ -107,10 +107,10 @@ if (SERVER) then
 	function ENT:Judge(plate)
 		self:StartSchedule( Sequence_Eat )
 		if (plate:GetDirty() or 0) > 0 then
-			self:EmitSound( badVoices[math.random(#badVoices)] )
+			self:Say(1)
 			timer.Simple( 2, function() if IsValid(self) then self:StartSchedule( table.Random(Sequence_Looser) ) self:EmitSound( "ambient/voices/cough"..math.random(1,4)..".wav" ) end end)
 		else
-			self:EmitSound( goodVoices[math.random(#goodVoices)] )
+			self:Say(2)
 			timer.Simple( 2, function() if IsValid(self) then self:StartSchedule( Sequence_Winner ) end end)
 		end
 		plate:Eat(self)
@@ -174,7 +174,7 @@ if (SERVER) then
 		if ( ply:Unassigned() ) then return end
 		if (self.NextTalk or 0) >= CurTime() then return end
 		self.NextTalk = CurTime()+10
-		self:Say(voice)
+		self:Say(0)
 		self:StartSchedule( Sequence_Wave )
 	end
 end
