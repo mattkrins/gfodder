@@ -42,9 +42,7 @@ FoodSystem.Add = function( self, fT )
 		if fT.Material then
 			self.Foods[fT.Name].Material = Material(GM.Name.."/foods/"..fT.Material, "noclamp smooth")
 		else
-			if file.Exists( "gamemodes/"..GM.Name.."/content/materials/"..GM.Name.."/foods/"..string.lower(fT.Name)..".png", "GAME" ) then
-				self.Foods[fT.Name].Material = Material(GM.Name.."/foods/"..string.lower(fT.Name)..".png", "noclamp smooth")
-			end
+			self.Foods[fT.Name].Material = Material(GM.Name.."/foods/"..string.lower(fT.Name)..".png", "noclamp smooth")
 		end
 	end
 	if fT.Recipe then self:AddRecipe(fT.Name, fT.Recipe) end
