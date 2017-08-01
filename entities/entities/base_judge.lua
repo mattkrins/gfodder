@@ -23,7 +23,43 @@ end
 function ENT:SetAutomaticFrameAdvance( bUsingAnim )
 	self.AutomaticFrameAdvance = bUsingAnim
 end
+if CLIENT then
+	local badVoices = {
+		Sound(GAMEMODE.Name.."/judge/bad/piss.mp3"),
+		Sound(GAMEMODE.Name.."/judge/bad/pileofshit.mp3"),
+		Sound(GAMEMODE.Name.."/judge/bad/minging.mp3"),
+		Sound(GAMEMODE.Name.."/judge/bad/howcanyoueat.mp3"),
+		Sound(GAMEMODE.Name.."/judge/bad/grim.mp3")
+	}
+	local goodVoices = {
+		Sound(GAMEMODE.Name.."/judge/good/delicious.mp3"),
+		Sound(GAMEMODE.Name.."/judge/good/deliciouswelldone.mp3"),
+		Sound(GAMEMODE.Name.."/judge/good/fknyum.mp3"),
+		Sound(GAMEMODE.Name.."/judge/good/goodfknfood.mp3"),
+		Sound(GAMEMODE.Name.."/judge/good/lightnice.mp3"),
+		Sound(GAMEMODE.Name.."/judge/good/quitenice.mp3"),
+		Sound(GAMEMODE.Name.."/judge/good/thnxbloddelic.mp3"),
+		Sound(GAMEMODE.Name.."/judge/good/wowdelicious.mp3")
+	}
+	local idleVoices = {
+		Sound(GAMEMODE.Name.."/judge/hello.mp3"),
+		Sound(GAMEMODE.Name.."/judge/isdatfunny.mp3"),
+		Sound(GAMEMODE.Name.."/judge/no.mp3"),
+		Sound(GAMEMODE.Name.."/judge/waturudoin.mp3"),
+		Sound(GAMEMODE.Name.."/judge/wipeass.mp3")
+	}
+	concommand.Add("JudgeVoice", function(ply, cmd, args)
+		if !args or !args[1] then return end
+		if !PlayerSystem:GetSetting("JUDGE VOICE") then return end
+		local judge = false
+		for _, v in pairs( ents.FindByClass( "base_judge" ) ) do judge = v break end
+		if !judge or !IsValid(judge) or tonumber(args[1]) > 2 then return end
+		if tonumber(args[1]) == 0 then judge:EmitSound( idleVoices[math.random(#idleVoices)], 55 ) end
+		if tonumber(args[1]) == 1 then judge:EmitSound( badVoices[math.random(#badVoices)], 55 ) end
+		if tonumber(args[1]) == 2 then judge:EmitSound( goodVoices[math.random(#goodVoices)], 55 ) end
+	end)
 
+end
 if (SERVER) then
 	local function addAnimation(Sequence) local Schedule = ai_schedule.New(Sequence) Schedule:AddTask( "PlaySequence", { Name = Sequence, Speed = 1 } ) return Schedule end
 	local Sequence_Winner = addAnimation("cheer1")
@@ -51,24 +87,6 @@ if (SERVER) then
 	function ENT:SelectSchedule() self:StartSchedule( Sequence_Idle ) end
 	function ENT:AcceptInput( Name, Activator, Caller ) if Name == "Use" and Caller:IsPlayer() then self:OnUse(Caller) end end
 	function ENT:OnTakeDamage() return false end
-	local badVoices = {
-		Sound(GAMEMODE.Name.."/judge/bad/piss.mp3"),
-		Sound(GAMEMODE.Name.."/judge/bad/pileofshit.mp3"),
-		Sound(GAMEMODE.Name.."/judge/bad/minging.mp3"),
-		Sound(GAMEMODE.Name.."/judge/bad/howcanyoueat.mp3"),
-		Sound(GAMEMODE.Name.."/judge/bad/grim.mp3")
-	}
-	local goodVoices = {
-		Sound(GAMEMODE.Name.."/judge/good/delicious.mp3"),
-		Sound(GAMEMODE.Name.."/judge/good/deliciouswelldone.mp3"),
-		Sound(GAMEMODE.Name.."/judge/good/fknyum.mp3"),
-		Sound(GAMEMODE.Name.."/judge/good/goodfknfood.mp3"),
-		Sound(GAMEMODE.Name.."/judge/good/lightnice.mp3"),
-		Sound(GAMEMODE.Name.."/judge/good/quitenice.mp3"),
-		Sound(GAMEMODE.Name.."/judge/good/thnxbloddelic.mp3"),
-		Sound(GAMEMODE.Name.."/judge/good/wowdelicious.mp3")
-	}
-	
 	function ENT:TakePlate(plate)
 		plate.HasJudge = self
 		plate:SetPos(self:GetAttachment( 8 ).Pos)
@@ -144,21 +162,19 @@ if (SERVER) then
 			if v:GetClass() == "item_plate" and v:HasFood() and !v.Judged then return v end
 		end
 	end
-		
-	local idleVoices = {
-		Sound(GAMEMODE.Name.."/judge/hello.mp3"),
-		Sound(GAMEMODE.Name.."/judge/isdatfunny.mp3"),
-		Sound(GAMEMODE.Name.."/judge/no.mp3"),
-		Sound(GAMEMODE.Name.."/judge/waturudoin.mp3"),
-		Sound(GAMEMODE.Name.."/judge/wipeass.mp3")
-	}
+	function ENT:Say(voice)
+		for _,v in pairs(player.GetAll()) do
+			v:ConCommand( "JudgeVoice "..(voice or 0))
+		end
+	end
+	
 	local Sequence_Wave = addAnimation("Wave_close")
 	function ENT:OnUse( ply )
 		if self.Judging then return end
 		if ( ply:Unassigned() ) then return end
 		if (self.NextTalk or 0) >= CurTime() then return end
 		self.NextTalk = CurTime()+10
-		self:EmitSound( idleVoices[math.random(#idleVoices)] )
+		self:Say(voice)
 		self:StartSchedule( Sequence_Wave )
 	end
 end

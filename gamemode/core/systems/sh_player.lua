@@ -1,7 +1,8 @@
 PlayerSystem = {}
 PlayerSystem.Options = {
 	["MENU MUSIC"] = "Toggle",
-	["GAME MUSIC"] = "Toggle"
+	["GAME MUSIC"] = "Toggle",
+	["JUDGE VOICE"] = "Toggle"
 }
 PlayerSystem.Defaults = {}
 for k, v in pairs(PlayerSystem.Options) do
