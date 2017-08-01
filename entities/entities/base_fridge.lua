@@ -1,4 +1,4 @@
-AddCSLuaFile()
+	AddCSLuaFile()
 DEFINE_BASECLASS( "item_spawner" )
 
 ENT.Type = "anim"
@@ -150,7 +150,7 @@ if CLIENT then
 		FoodsList:SetSpaceX( 5 )
 		
 		local size = FoodsList:GetTall()
-		local foods = {"Meat","Tomato","Lettuce","Bread"}
+		local foods = {"Meat","Tomato","Lettuce","Bread","Potato"}
 		for k, v in pairs(foods) do
 			local fT = FoodSystem:Food(v) or {}
 			local foodButton = FoodsList:Add( "DButton" )

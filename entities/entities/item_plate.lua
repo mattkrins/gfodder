@@ -33,7 +33,13 @@ if SERVER then
 		self.Judged = false
 		if self:GetSoup() then self:EmitSound( "ambient/water/rain_drip3.wav" ) end
 		local Recipe = self:HasRecipe() or false
-		if Recipe then self:RemoveAllFood() self:AddFood(Recipe, {PreparedBy = {"Recipe"}}) end
+		if Recipe then
+			local rT = FoodSystem:Food(Recipe)
+			if self:GetSoup() and !rT.IsSoup then return end
+			if !self:GetSoup() and rT.IsSoup then return end
+			self:RemoveAllFood()
+			self:AddFood(Recipe, {PreparedBy = {"Recipe"}})
+		end
 	end
 	function ENT:Touch( entity )
 		if (self.NextTouch or 0) > CurTime() then return end self.NextTouch=CurTime()+0.1
@@ -42,7 +48,7 @@ if SERVER then
 			for k,v in pairs(entity:GetFoodTable() or {}) do
 				if table.HasValue(v.PreparedBy or {}, "Boiler") then self:SetSoup(true) end
 				self:AddFood(v.Name, v) self:OnAdd(v.Name) entity:RemoveFood(v.Name) break
-			end return
+			end entity.Preparing = false entity:SetPreparing(false) return
 		end
 		if !self:GetSoup() and entity:GetClass() == self.FoodClass then
 			if !entity.GetFood or !entity:GetFood() or entity:GetFood() == "" then return end
@@ -71,15 +77,12 @@ if SERVER then
 		self:RemoveAllFood()
 	end
 	function ENT:HasRecipe()
+		local t = {}
+		for _, v in pairs(self:GetFoodTable() or {}) do table.insert(t, v.Name) end table.sort( t )
 		for k,recipe in pairs(FoodSystem.Recipes or {}) do
-			local f = 0
-			local t = {}
-			for k,v in pairs(recipe or {}) do
-				if !table.HasValue(t, v) and self:HasFood(v) then table.insert(t, v) f = f + 1 end
-			end
-			if f == #recipe and #t == self:HasFood() then return k end
-		end
-		return false
+			table.sort( recipe )
+			if table.ToString( t ) == table.ToString( recipe ) then return k end
+		end return false
 	end
 	function ENT:Use( ply )
 		if !self:HasFood() then return end

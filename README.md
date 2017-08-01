@@ -11,8 +11,8 @@ Use the fridge to collect ingredients, chop them up, fry them or soup them and s
 When you want to try something different, vote to end the game via the F1 menu.
 
 ## Notes:
-- Order system does not handle soup yet, but feel free to make one in freestyle mode to see how it works.
 - Loot Box (opened with order points) does nothing yet, just looks pretty.
+- The judge does not score on dirty plates, undercooked food or burnt food yet. The functionality is there but not entirely coded yet.
 
 ## Thanks to:
 - [GamingMad101](http://steamcommunity.com/id/GamingMad101/) for an excellent [map](https://github.com/mattkrins/gfodder/blob/master/content/maps/).
