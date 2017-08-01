@@ -2,6 +2,7 @@ local GM = {}
 
 GM.Name = "Practice"
 GM.Description = "Practice and refine your cooking abilities."
+GM.Material = "overcooked/ui/gamemodes/mode_practice.png"
 GM.Spectators = true
 GM.Teams = {1,2}
 

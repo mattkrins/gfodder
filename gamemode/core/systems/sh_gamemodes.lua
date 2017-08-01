@@ -63,9 +63,8 @@ GamemodeSystem.Add = function( self, Mode )
 	if !Mode or !Mode.Name then return false end
 	self.Modes[Mode.Name] = table.Copy(Mode)
 	if CLIENT then
-		if Mode.Material then
-			self.Modes[Mode.Name].Material = Material(Mode.Material, "noclamp smooth")
-		else
+		if Mode.Material then self.Modes[Mode.Name].Material = Material(Mode.Material, "noclamp smooth") end
+		if file.Exists( "gamemodes/"..GM.Name.."/content/materials/"..GM.Name.."/gui/gamemodes/"..string.lower(Mode.Name)..".png", "GAME" ) then
 			self.Modes[Mode.Name].Material = Material(GM.Name.."/gui/gamemodes/"..string.lower(Mode.Name)..".png", "noclamp smooth")
 		end
 	end

@@ -2,6 +2,7 @@ local GM = {}
 
 GM.Name = "Versus"
 GM.Description = "Competitive cooking."
+GM.Material = "overcooked/ui/gamemodes/mode_vs.png"
 GM.Spectators = true
 GM.Teams = {1,2}
 GM.CanPlay = function(s)
